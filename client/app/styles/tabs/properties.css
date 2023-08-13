@@ -1,0 +1,30 @@
+#tab-properties {
+    display: grid;
+    grid-template-areas:
+        'world addtrack'
+        'world tracklist'
+    ;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1.0fr 1.0fr;
+    gap: 8px;
+}
+
+#properties-world { grid-area: world; }
+#properties-addtrack { grid-area: addtrack; }
+#properties-tracklist { grid-area: tracklist; }
+
+#properties-tracklist > * {
+    padding: 8px;
+    box-sizing: border-box;
+    
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+
+    display: grid;
+    grid-template-areas:
+        'i s'
+        't t'
+    ;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}

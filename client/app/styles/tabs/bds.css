@@ -1,0 +1,24 @@
+#tab-bds {
+    display: grid;
+    grid-template-areas:
+        'opts stats'
+        'log stats'
+        'input stats'
+    ;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+#bds-log-list > * > tr > td:nth-child(1) { width: 0px; min-width: min-content; }
+
+#bds-log-list.no-level-log > * > tr[data-level="log"],
+#bds-log-list.no-level-info > * > tr[data-level="info"],
+#bds-log-list.no-level-warn > * > tr[data-level="warn"],
+#bds-log-list.no-level-error > * > tr[data-level="error"],
+#bds-log-list.no-level-unknown > * > tr[data-level="unknown"] { display: none; }
+
+#bds-stats {
+    padding-left: 8px;
+    border-left: 1px solid var(--border-mid);
+}

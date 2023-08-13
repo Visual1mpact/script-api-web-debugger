@@ -1,0 +1,24 @@
+#tab-events {
+    display: grid;
+    grid-template-areas:
+        'lis-opts border ev-opts'
+        'lis-opts border ev-log'
+        'lis-list border ev-log'
+    ;
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+}
+
+#event-log.no-type-world > * > tr[data-type="world"],
+#event-log.no-type-system > * > tr[data-type="system"],
+#event-log.no-priority-after > * > tr[data-priority="after"],
+#event-log.no-priority-before > * > tr[data-priority="before"] { display: none }
+
+#event-lis-log.no-type-world > * > tr[data-type="world"],
+#event-lis-log.no-type-system > * > tr[data-type="system"],
+#event-lis-log.no-status-subscribed > * > tr[data-status="subscribed"],
+#event-lis-log.no-status-unsubscribed > * > tr[data-status="unsubscribed"],
+#event-lis-log.no-status-disabled > * > tr[data-status="disabled"],
+#event-lis-log.no-priority-after > * > tr[data-priority="after"],
+#event-lis-log.no-priority-before > * > tr[data-priority="before"] { display: none }

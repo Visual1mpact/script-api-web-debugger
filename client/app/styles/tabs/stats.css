@@ -1,0 +1,19 @@
+#tab-stats {
+    display: grid;
+    grid-template-areas:
+        'size timing'
+        'count timing'
+    ;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+#tab-stats > canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#stats-size { grid-area: size; }
+#stats-count { grid-area: count; }
+#stats-timing { grid-area: timing; }

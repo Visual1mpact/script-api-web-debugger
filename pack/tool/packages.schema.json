@@ -1,0 +1,84 @@
+{
+    "type": "object",
+    "properties": {
+        "minecraft_version": {
+            "type": "string",
+            "description": "Specifies the minecraft version to be used."
+        },
+        "packages": {
+            "type": "object",
+            "description": "Packages to be installed.",
+            "additionalProperties": {
+                "anyOf": [
+                    {
+                        "type": "string"
+                    }, {
+                        "type": "object",
+                        "required": [
+                            "version"
+                        ],
+                        "allOf": [
+                            {
+                                "properties": {
+                                    "version": {
+                                        "type": "string",
+                                        "description": "Package version."
+                                    },
+                                    "minecraft_version_override": {
+                                        "type": "string",
+                                        "description": "Minecraft version to be used, defaults to `minecraft_version`."
+                                    }
+                                }
+                            }, {
+                                "anyOf": [
+                                    {
+                                        "properties": {
+                                            "mode": {
+                                                "enum": [ "npm", "npm-dev" ],
+                                                "description": "Installation mode.",
+                                                "default": "npm-dev"
+                                            }
+                                        }
+                                    }, {
+                                        "required": [
+                                            "location"
+                                        ],
+                                        "properties": {
+                                            "mode": {
+                                                "enum": [ "custom" ],
+                                                "description": "Installation mode.",
+                                                "default": "npm-dev"
+                                            },
+                                            "location": {
+                                                "type": "string",
+                                                "description": "Installation location, requires `mode` to be `custom`"
+                                            },
+                                            "initial": {
+                                                "type": "string",
+                                                "description": "Initial location"
+                                            },
+                                            "deletes": {
+                                                "type": "array",
+                                                "description": "Files / folders to be deleted. This is done before rename.",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "renames": {
+                                                "type": "object",
+                                                "description": "Files / folders to be renamed. This is done after delete.",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

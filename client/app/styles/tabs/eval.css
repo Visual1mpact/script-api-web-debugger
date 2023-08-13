@@ -1,0 +1,47 @@
+#tab-eval {
+    display: grid;
+    grid-template-areas:
+        'list list'
+        'input send'
+    ;
+    grid-template-rows: 1fr auto;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+#eval-list {
+    grid-area: list;
+    
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+#eval-list > * {
+    display: grid;
+    grid-template-areas:
+        'send code act'
+        'ret res res'
+    ;
+    grid-template-columns: auto 1fr auto;
+    gap: 4px;
+}
+
+#eval-list > *:not(:last-child) {
+    margin-bottom: 0.5em;
+    padding-bottom: 0.5em;
+
+    border-bottom: 1px solid var(--border-mid);
+}
+
+#eval-input {
+    grid-area: input;
+
+    min-height: 3em;
+    height: 3em;
+    max-height: 500px;
+}
+
+#eval-send {
+    grid-area: send;
+    align-self: center;
+}

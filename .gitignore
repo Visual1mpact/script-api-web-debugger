@@ -1,0 +1,10 @@
+node_modules
+sessions
+pack/pack/subpacks/subscript
+
+client/app/scripts
+server/app
+pack/pack/scripts
+
+.*
+!.gitignore

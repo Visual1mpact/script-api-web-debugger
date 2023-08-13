@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html class="fill noflow">
+    <head>
+        <title>Script API Web Debugger</title>
+        
+        <style>
+            @import url('styles/all/element.css');
+            @import url('styles/all/misc.css');
+
+            @import url('styles/tabs/bds.css');
+            @import url('styles/tabs/eval.css');
+            @import url('styles/tabs/console.css');
+            @import url('styles/tabs/stats.css');
+            @import url('styles/tabs/properties.css');
+            @import url('styles/tabs/events.css');
+            @import url('styles/tabs/runs.css');
+
+            @import url('styles/inspector.css');
+            @import url('styles/main.css');
+        </style>
+
+        <script type="module" src="scripts/main.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.3/chart.umd.min.js" integrity="sha512-mCXCsj30LV3PLPTIuWjZQX84qiQ56EgBZOsPUA+ya5mWmAb8Djdxa976zWzxquOwkh0TxI12KA4eniKpY3yKhA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
+    <body class="fill noflow flex-col">
+        <header class="flex-row" id="header">
+            <h2>Script API Web Debugger</h2>
+
+            <button class="hnav" data-tab="bds">bds</button>
+            <button class="hnav" data-tab="eval">eval</button>
+            <button class="hnav" data-tab="console">console</button>
+            <button class="hnav" data-tab="events">events</button>
+            <button class="hnav" data-tab="runs">runs</button>
+            <button class="hnav" data-tab="properties">properties</button>
+            <button class="hnav" data-tab="stats">stats</button>
+        </header>
+
+        <div id="tabs" class="fill stack noflow">
+            <!-- Tab: BDS -->
+            <div id="tab-bds" data-tab="bds" class="noflow">
+                <div id="bds-log-opts" style="grid-area: opts;">
+                    <b>level:</b>
+
+                    <span>log</span>
+                    <input type="checkbox" data-value="log" checked>
+                    <span>info</span>
+                    <input type="checkbox" data-value="info" checked>
+                    <span>warn</span>
+                    <input type="checkbox" data-value="warn" checked>
+                    <span>error</span>
+                    <input type="checkbox" data-value="error" checked>
+                    <span>unknown</span>
+                    <input type="checkbox" data-value="unknown" checked>
+                </div>
+
+                <div id="bds-logs" class="noflow" style="grid-area: log;">
+                    <div class="fill flow-y">
+                        <table id="bds-log-list" class="fill-x border row-2">
+                            <thead>
+                                <tr>
+                                    <td>level</td>
+                                    <td>message</td>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="bds-stats" class="flex-col justtify-center" style="grid-area: stats">
+                    <table class="border row-2 fill-x">
+                        <tbody>
+                            <tr>
+                                <td>PID</td>
+                                <td id="bds-stats-pid">...</td>
+                            </tr>
+                            <tr>
+                                <td>status</td>
+                                <td id="bds-stats-status">...</td>
+                            </tr>
+                            <tr>
+                                <td>kill code</td>
+                                <td id="bds-stats-kc">...</td>
+                            </tr>
+                            <tr>
+                                <td>kill signal</td>
+                                <td id="bds-stats-ks">...</td>
+                            </tr>
+                            <tr>
+                                <td>session ID</td>
+                                <td id="bds-stats-sid">...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div>&nbsp;</div>
+
+                    <button id="bds-signal-kill">kill</button>
+                </div>
+
+                <div class="flex" style="grid-area: input; gap: 8px;">
+                    <input type="text" id="bds-input" placeholder="run a command, press ENTER to send" spellcheck="false" class="fill-x">
+                    <button id="bds-send">send</button>
+                </div>
+            </div>
+
+            <!-- Tab: Console -->
+            <div id="tab-console" data-tab="console" class="noflow" hidden>
+                <div id="console-log-opts" class="flex">
+                    <div>
+                        <b>level:</b>
+
+                        <span>log</span>
+                        <input type="checkbox" data-value="log" checked>
+                        <span>info</span>
+                        <input type="checkbox" data-value="info" checked>
+                        <span>warn</span>
+                        <input type="checkbox" data-value="warn" checked>
+                        <span>error</span>
+                        <input type="checkbox" data-value="error" checked>
+                    </div>
+
+                    <div class="gap"></div>
+
+                    <div>
+                        <input id="console-log-show-stack" type="checkbox">
+                        <span>show stack</span>
+                    </div>
+                </div>
+                <div class="fill flow-y">
+                    <table id="console-list" class="border row-2 fill-x no-stack">
+                        <thead>
+                            <tr>
+                                <td>level</td>
+                                <td>content</td>
+                                <td>source</td>
+                            </tr>
+                        </thead>
+                        <tbody class="code"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: eval -->
+            <div id="tab-eval" data-tab="eval" class="noflow" hidden>
+                <div id="eval-list" class="flow-y"></div>
+                <textarea id="eval-input" class="code" placeholder="enter a code, press CTRL+ENTER to evaluate" spellcheck="false"></textarea>
+                <button id="eval-send">eval</button>
+            </div>
+
+            <!-- Tab: events -->
+            <div id="tab-events" data-tab="events" class="noflow" hidden>
+                <!-- listener opts -->
+                <div class="flex" style="grid-area: lis-opts; justify-content: space-between;">
+                    <table id="ev-lis-opts" class="space-x" style="grid-area: toggle;">
+                        <tbody>
+                            <tr>
+                                <td><b>type</b></td>
+
+                                <td>world</td>
+                                <td><input type="checkbox" data-type="type" data-value="world" checked></td>
+                                <td>system</td>
+                                <td><input type="checkbox" data-type="type" data-value="system" checked></td>
+                            </tr>
+                                <td><b>priority</b></td>
+
+                                <td>before</td>
+                                <td><input type="checkbox" data-type="priority" data-value="before" checked></td>
+                                <td>after</td>
+                                <td><input type="checkbox" data-type="priority" data-value="after" checked></td>
+                            <tr>
+                                <td rowspan="2"><b>status</b></td>
+
+                                <td>subscribed</td>
+                                <td><input type="checkbox" data-type="status" data-value="subscribed" checked></td>
+                                <td>unsubscribed</td>
+                                <td><input type="checkbox" data-type="status" data-value="unsubscribed" checked></td>
+                            </tr>
+                            <tr>
+                                <td>disabled</td>
+                                <td><input type="checkbox" data-type="status" data-value="disabled" checked></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                
+                                <td><b>autoclear</b></td>
+                                <td><input type="checkbox" id="ev-lis-autoclear" checked></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex-col" style="gap: 8px">
+                        <div>
+                            <b>name</b>
+                            <input type="text" id="ev-lis-fi-name" placeholder="event name..." pattern="[a-zA-Z]+">
+                        </div>
+                        <button id="ev-lis-clear">unlist unsubscribed</button>
+                    </div>
+                </div>
+                <!-- listener log -->
+                <div style="grid-area: lis-list;" class="flow-y">
+                    <table id="event-lis-log" class="fill-x row-4 border clickable">
+                        <thead>
+                            <tr>
+                                <td>tick</td>
+                                <td>type</td>
+                                <td>priority</td>
+                                <td>name</td>
+                                <td>status</td>
+                                <td>function</td>
+                            </tr>
+                        </thead>
+                        <tbody class="code"></tbody>
+                    </table>
+                </div>
+
+                <!-- Border -->
+                <div style="grid-area: border; border-right: 1px solid var(--border-mid);"></div>
+
+                <!-- opts -->
+                <div id="ev-opts" style="grid-area: ev-opts; gap: 8px" class="flex align-center">
+                    <div>
+                        <b>type:</b>
+
+                        <span>world</span>
+                        <input type="checkbox" data-type="type" data-value="world" checked>
+                        <span>system</span>
+                        <input type="checkbox" data-type="type" data-value="system" checked>
+                    </div>
+                    <div>
+                        <b>priority:</b>
+
+                        <span>before</span>
+                        <input type="checkbox" data-type="priority" data-value="before" checked>
+                        <span>after</span>
+                        <input type="checkbox" data-type="priority" data-value="after" checked>
+                    </div>
+
+                    <div class="gap"></div>
+
+                    <span>name</span>
+                    <input type="text" id="ev-fi-name" placeholder="event name..." pattern="[a-zA-Z]+">
+                </div>
+                <!-- log -->
+                <div style="grid-area: ev-log;" class="flow-y">
+                    <table id="event-log" class="fill-x row-4 border clickable">
+                        <thead>
+                            <tr>
+                                <td>tick</td>
+                                <td>type</td>
+                                <td>priority</td>
+                                <td>name</td>
+                                <td>listeners</td>
+                                <td>delay</td>
+                            </tr>
+                        </thead>
+                        <tbody class="code"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: runs -->
+            <div id="tab-runs" data-tab="runs" class="noflow flex" hidden>
+                <!-- Timing options -->
+                <div style="grid-area: rtime-opts; gap: 12px" class="flex align-center">
+                    <div>
+                        <span>min delay:</span>
+                        <input id="rtime-o-mindelay" type="number" min="0" value="1" style="width: 70px">
+                    </div>
+                    <div>
+                        <span>min count:</span>
+                        <input id="rtime-o-mincount" type="number" min="0" value="1" style="width: 70px">
+                    </div>
+                    <div>
+                        <span>ids:</span>
+                        <input id="rtime-o-filterids" type="text" pattern="(\d+($|\|(?!$)))+" style="width: 70px" title="function ids, separate with '|' (e.g. '1|12|4')" placeholder="hover...">
+                    </div>
+
+                    <div class="gap"></div>
+
+                    <button id="rtime-o-pause">pause</button>
+                </div>
+                <!-- Timing list -->
+                <div style="grid-area: rtime-list;" class="flow-y">
+                    <table id="rtime-list" class="border fill-x clickable">
+                        <thead>
+                            <tr>
+                                <td>tick</td>
+                                <td>delay</td>
+                                <td>count</td>
+                            </tr>
+                        </thead>
+                        <tbody class="code"></tbody>
+                    </table>
+                </div>
+
+                <!-- Border -->
+                <div style="grid-area: border; border-right: 1px solid var(--border-mid);"></div>
+
+                <!-- Run options -->
+                <table id="run-opts" class="space-x">
+                    <tbody>
+                        <tr>
+                            <td><b>type</b></td>
+
+                            <td>run</td>
+                            <td><input type="checkbox" data-type="type" data-value="run" checked></td>
+                            <td>runInterval</td>
+                            <td><input type="checkbox" data-type="type" data-value="runInterval" checked></td>
+                            <td>runTimeout</td>
+                            <td><input type="checkbox" data-type="type" data-value="runTimeout" checked></td>
+                        </tr>
+                        <tr>
+                            <td><b>status</b></td>
+
+                            <td>active</td>
+                            <td><input type="checkbox" data-type="status" data-value="active" checked></td>
+                            <td>cleared</td>
+                            <td><input type="checkbox" data-type="status" data-value="cleared" checked></td>
+                            <td>suspended</td>
+                            <td><input type="checkbox" data-type="status" data-value="suspended" checked></td>
+                        </tr>
+                        <tr>
+                            <td><b>exec</b></td>
+                            
+                            <td>unexecuted</td>
+                            <td><input type="checkbox" data-type="exec" data-value="unexecuted" checked></td>
+                            <td>executed</td>
+                            <td><input type="checkbox" data-type="exec" data-value="executed" checked></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+
+                            <td><b>autoclear</b></td>
+                            <td><input id="run-o-autoclear" type="checkbox" checked></td>
+                            <td><b>pulse</b></td>
+                            <td><input id="run-o-pulse" type="checkbox"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- Run actions -->
+                <div style="grid-area: run-acts">
+                    <button id="run-o-clear">unlist cleared</button>
+                </div>
+                <!-- Run list -->
+                <div style="grid-area: run-list;" class="flow-y">
+                    <table id="run-list" class="row-4 border fill-x clickable">
+                        <thead>
+                            <tr>
+                                <td>type</td>
+                                <td>status</td>
+                                <td>duration</td>
+                                <td>id</td>
+                                <td>function</td>
+                                <td>avgtime</td>
+                                <td>maxtime</td>
+                            </tr>
+                        </thead>
+                        <tbody class="code"></tbody>
+                    </table>
+                </div>
+                <!-- Run footer -->
+                <span style="grid-area: run-foot; font-family: monospace; font-size: 1.2em;">
+                    active runs: <span id="rfoot-rcount"></span>
+                    &bullet; avgtime: <span id="rfoot-avgtime">---</span>
+                    &bullet; avgpeak: <span id="rfoot-avgpeak">---</span>
+                    &bullet; maxtime: <span id="rfoot-maxtime">---</span>
+                </span>
+            </div>
+
+            <!-- Tab: properties -->
+            <div id="tab-properties" data-tab="properties" class="noflow" hidden>
+                <div id="properties-world" class="noflow flex-col">
+                    <div>
+                        <h3>world properties</h3>
+                        <span>estimated size: <span id="properties-world-est">---</span> bytes</span>
+                    </div>
+                    <div class="flow-y">
+                        <table class="row-2 fill-x border" id="properties-world-list">
+                            <thead>
+                                <tr>
+                                    <td>property</td>
+                                    <td>type</td>
+                                    <td>default</td>
+                                    <td>value</td>
+                                </tr>
+                            </thead>
+                            <tbody class="code"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="properties-addtrack" class="flex" style="gap: 8px">
+                    <select id="p-addtrack-type">
+                        <option value="player">player name</option>
+                        <option value="entity">entity id</option>
+                    </select>
+
+                    <input type="text" id="p-addtrack-value" class="fill-x">
+
+                    <button id="p-addtrack-track">watch</button>
+                </div>
+                <div id="properties-tracklist" class="flow-y"></div>
+            </div>
+
+            <!-- Tab: Stats -->
+            <div id="tab-stats" data-tab="stats" class="noflow" hidden>
+                <canvas id="stats-size"></canvas>
+                <canvas id="stats-count"></canvas>
+                <canvas id="stats-timing"></canvas>
+            </div>
+        </div>
+    </body>
+</html>

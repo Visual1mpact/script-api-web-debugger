@@ -1,0 +1,45 @@
+button.ins-button {
+    border: none !important;
+    color: gray !important;
+}
+
+/* Things */
+
+.ins-string    {
+    color: lime;
+    overflow: hidden;
+    
+    white-space: pre-wrap;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+.ins-plain        { color: white; }
+.ins-number       { color: yellow; }
+.ins-boolean      { color: yellow; }
+.ins-symbol       { color: magenta; }
+.ins-function     { color: cyan; }
+.ins-null         { color: grey; }
+.ins-undefined    { color: grey; }
+.ins-circular     { color: violet; }
+.ins-class        { color: blueviolet; }
+.ins-error        { color: lightcoral; }
+.ins-getter_error { color: lightcoral; }
+
+/* Object */
+
+.ins-obj {
+    margin-left: 2.5em;
+
+    border-left: 1px dashed var(--border-weak);
+}
+
+.ins-obj-name { color: orange; }
+.ins-obj-proto { color: gray; }
+
+.ins-obj tr:hover > td { background: rgba(255, 255, 255, 0.04); }
+
+.ins-obj td { padding: 0 0.5em; }
+.ins-obj td:first-child {
+    border-right: 1px dashed var(--border-mid);
+    vertical-align: top;
+}

@@ -1,0 +1,19 @@
+#console-list > * > tr > td:is(:nth-child(1), :nth-child(3)) { width: 0px; min-width: min-content; }
+
+#console-list > tbody > tr:not(:last-child) > td {
+    margin-bottom: 0.5em;
+    padding-bottom: 0.5em;
+
+    border-bottom: 1px solid var(--border-mid);
+}
+
+#console-list > tbody > tr > td:nth-child(2) > :not(:last-child)::after {
+    content: ' '
+}
+
+#console-list.no-level-log > * > tr[data-level="log"],
+#console-list.no-level-info > * > tr[data-level="info"],
+#console-list.no-level-warn > * > tr[data-level="warn"],
+#console-list.no-level-error > * > tr[data-level="error"] { display: none; }
+
+#console-list.no-stack > * > tr > td:nth-child(3) { display: none; }

@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "lib": ["esnext", "dom"],
+        "target": "esnext",
+        "module": "esnext",
+
+        "moduleResolution": "node",
+        "maxNodeModuleJsDepth": 1,
+
+        "outDir": "app/scripts",
+        "removeComments": true,
+        "allowJs": true,
+
+        "strict": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true
+    },
+    "include": ["src", "../global"]
+}

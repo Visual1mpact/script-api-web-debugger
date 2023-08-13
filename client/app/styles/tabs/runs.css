@@ -1,0 +1,38 @@
+#tab-runs {
+    display: grid;
+    grid-template-areas:
+        'rtime-opts border run-opts run-acts'
+        'rtime-list border run-opts run-acts'
+        'rtime-list border run-list run-list'
+        'rtime-list border run-foot run-foot'
+    ;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 0.8fr auto 1.2fr auto;
+    gap: 8px;
+}
+
+#run-list.no-type-run > * > tr[data-type="run"],
+#run-list.no-type-runInterval > * > tr[data-type="runInterval"],
+#run-list.no-type-runTimeout > * > tr[data-type="runTimeout"],
+#run-list.no-status-active > * > tr[data-status="active"],
+#run-list.no-status-cleared > * > tr[data-status="cleared"],
+#run-list.no-status-suspended > * > tr[data-status="suspended"],
+#run-list.no-exec-unexecuted > * > tr[data-exec="unexecuted"],
+#run-list.no-exec-executed > * > tr[data-exec="executed"] { display: none; }
+
+#run-list > tbody > tr:nth-child(2n+2) > td > div {
+    display: grid;
+    grid-template-areas:
+        'add clear'
+        'left right'
+        'act act'
+    ;
+    grid-template-rows: auto fit-content(250px) auto;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+#run-opts {
+    grid-area: run-opts;
+    justify-self: start;
+}

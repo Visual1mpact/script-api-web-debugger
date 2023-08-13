@@ -1,0 +1,42 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "Script API Web Debugger Pack",
+        "description": "Allows communication between NodeJS and this pack",
+        "version": [ 1, 0, 0 ],
+        "min_engine_version": [ 1, 20, 10 ],
+        "uuid": "9db69c9c-d264-4a43-995b-77971d5c41e2"
+    },
+    "modules": [{
+        "description": "",
+        "version": [ 1, 0, 0 ],
+        "type": "script",
+        "language": "javascript",
+        "entry": "scripts/debug_hook/main.js",
+        "uuid": "68b854bf-2845-4c5d-a3c7-a4c9f28bf23f"
+    }],
+    "dependencies": [{
+        "module_name": "@minecraft/server",
+        "version": "1.4.0-beta"
+    },{
+        "module_name": "@minecraft/server-gametest",
+        "version": "1.0.0-beta"
+    }, {
+        "module_name": "@minecraft/server-ui",
+        "version": "1.2.0-beta"
+    }],
+    "capabilities": [
+        "script_eval"
+    ],
+    "subpacks": [
+        {
+            "folder_name": "empty",
+            "name": "Subscript: Disabled",
+            "memory_tier": 0
+        }, {
+            "folder_name": "subscript",
+            "name": "Subscript: Enabled",
+            "memory_tier": 0
+        }
+    ]
+}

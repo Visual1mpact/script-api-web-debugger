@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "lib": ["esnext"],
+        "target": "esnext",
+        "module": "esnext",
+
+        "moduleResolution": "node",
+        "maxNodeModuleJsDepth": 1,
+
+        "outDir": "pack/scripts/debug_hook",
+        "allowJs": true,
+        "removeComments": false,
+
+        "strict": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": false,
+    },
+    "include": ["src", "types", "../global"],
+}

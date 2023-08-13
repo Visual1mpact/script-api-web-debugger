@@ -1,0 +1,63 @@
+.layer {
+    position: fixed;
+    z-index: 2;
+}
+
+.fill, .fill-x { width: 100%; }
+.fill, .fill-y { height: 100%; }
+
+.textsize { width: 1em; height: 1em; }
+.textsize-2 { width: 2em; height: 2em; }
+.textsize-3 { width: 3em; height: 3em; }
+
+.shrink, .shrink-min { min-width: 0; min-height: 0; }
+.shrink-max { max-width: 100%; max-height: 100%; }
+
+.stack { display: grid; }
+.stack > * {
+    grid-area: 1 / 1 / 1 / 1;
+    width: 100%;
+    height: 100%;
+}
+
+.unblock, .unblock-all { pointer-events: none; }
+.unblock > * { pointer-events: initial; }
+
+.noflow { overflow: hidden; }
+.flow-x { overflow-y: hidden; overflow-x: auto; }
+.flow-y { overflow-x: hidden; overflow-y: auto; }
+
+.flex,
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-col,
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.gap {
+    flex: 1 1 auto;
+}
+
+.center, .justify-center { justify-content: center }
+.center, .align-center { align-items: center }
+
+.nf-center, .nf-justify-center { text-align: center; }
+.nf-center, .nf-align-center { vertical-align: middle; }
+
+.tooltip-content {
+    position: absolute;
+    display: none;
+}
+.tooltip { position: relative; }
+.tooltip:hover > .tooltip-content { display: inherit; }
+
+.code {
+    font-family: monospace;
+    font-size: 1.2em;
+    white-space: pre;
+}
