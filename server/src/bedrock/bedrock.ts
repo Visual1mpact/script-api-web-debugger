@@ -23,11 +23,13 @@ export default class NodeBedrock {
         this.sessionDir = sessionDir
 
         this.process = cp.spawn(dir, {
+            cwd: path.resolve(path.parse(dir).dir),
             shell: false,
             detached: true,
             env: {
                 'APPDATA': sessionDir,
-                'LOCALAPPDATA': sessionDir
+                'LOCALAPPDATA': sessionDir,
+                'LD_LIBRARY_PATH': '.'
             }
         })
         this.process.unref()
