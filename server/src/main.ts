@@ -1,11 +1,11 @@
 import NodeBedrock from "./bedrock/bedrock.js"
-import BedrockStorage from "./bedrock/storage.js"
+import BedrockInterpreter from "./bedrock/interpreter.js"
 
 let dir = process.argv[2]
 if (!dir) throw new Error('hook requires a directory argument')
 
 export const bedrock = new NodeBedrock(dir)
-export const bedrockStorage = new BedrockStorage(bedrock)
+export const bedrockInterpreter = new BedrockInterpreter(bedrock)
 
 import './misc/server.js'
 import './misc/log.js'

@@ -29,6 +29,6 @@ export default class PromiseController<T = any> {
     #done = false
     get done() { return this.#done }
 
-    declare resolve: (value: T) => void
+    declare resolve: (value: T | Promise<T>) => void
     declare reject: (error?: any) => void
 }

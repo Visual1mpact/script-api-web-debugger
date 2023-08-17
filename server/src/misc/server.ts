@@ -1,7 +1,7 @@
 import express = require('express')
 import sse = require('better-sse')
 import timersp = require('timers/promises')
-import { bedrock, bedrockStorage } from '../main.js'
+import { bedrock, bedrockInterpreter } from '../main.js'
 
 const server = express()
 
@@ -19,18 +19,7 @@ if (portArg) {
 server.listen(port, () => console.log(`server started on port ${port}`))
 
 server.get('/', (req, res) => res.redirect('/app'))
-
-server.get('/session/bedrock', async (req, res) => {
-    const str = await bedrockStorage.readBedrockLog()
-    str.pipe(res)
-})
-
-server.get('/session/script/:type', async (req, res) => {
-    const str = await bedrockStorage.readEventsLog(req.params.type)
-    if (!str) return res.status(204).end()
-
-    str.pipe(res)
-})
+server.use('/app', express.static('../client/app', { index: 'main.html' }))
 
 server.get('/process', (req, res) => {
     const proc = bedrock.process
@@ -41,26 +30,45 @@ server.get('/process', (req, res) => {
         killed: proc.killed,
         exitCode: proc.exitCode,
         exitSignal: proc.signalCode,
-
-        sessionID: bedrock.sessionID,
-        scriptSessionID: bedrock.scriptSessionID
     }).end()
 })
 
-server.post('/session/send', express.raw({ type: () => true }), (req, res) => {
+server.get('/data', (req, res) => {
+    const { bdsConsoleLog, consoleLog, eventLog, eventListeners, systemRuns, propertyRegistry } = bedrockInterpreter
+    const { pid, killed, exitCode, signalCode } = bedrock.process
+
+    res.send({
+        pid,
+        killed,
+        exitCode,
+        signalCode,
+
+        consoleLog: bdsConsoleLog,
+
+        script: {
+            consoleLog,
+            eventLog,
+            eventListeners,
+            systemRuns,
+            propertyRegistry,
+        }
+    }).end()
+})
+
+server.post('/send', express.raw({ type: () => true }), (req, res) => {
     bedrock.send(req.body)
     res.end()
 })
 
-server.post('/session/kill', (req, res) => {
+server.post('/kill', (req, res) => {
     bedrock.process.kill()
     res.end()
 })
 
-server.post('/session/sendeval', express.text({ type: () => true }), async (req, res) => {
+server.post('/sendeval', express.text({ type: () => true }), async (req, res) => {
     res.status(200)
     
-    const data = await bedrock.sendEval(req.body)
+    const data = await bedrockInterpreter.sendEval(req.body)
     res.send(data).end()
 })
 
@@ -83,7 +91,5 @@ bedrock.bedrockEvents.once('ready', async () => {
         await timersp.setTimeout(1000)
     }
 })
-
-server.use('/app', express.static('../client/app', { index: 'main.html' }))
 
 export { port }
