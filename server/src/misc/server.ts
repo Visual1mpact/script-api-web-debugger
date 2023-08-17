@@ -21,23 +21,11 @@ server.listen(port, () => console.log(`server started on port ${port}`))
 server.get('/', (req, res) => res.redirect('/app'))
 server.use('/app', express.static('../client/app', { index: 'main.html' }))
 
-server.get('/process', (req, res) => {
-    const proc = bedrock.process
-
-    res.send({
-        pid: proc.pid,
-
-        killed: proc.killed,
-        exitCode: proc.exitCode,
-        exitSignal: proc.signalCode,
-    }).end()
-})
-
-server.get('/data', (req, res) => {
+server.get('/data', async (req, res) => {
     const { bdsConsoleLog, consoleLog, eventLog, eventListeners, systemRuns, propertyRegistry } = bedrockInterpreter
-    const { pid, killed, exitCode, signalCode } = bedrock.process
+    const { pid = -1, killed, exitCode, signalCode } = bedrock.process
 
-    res.send({
+    const data: NodeBedrockInterpreter.GetData = {
         pid,
         killed,
         exitCode,
@@ -50,9 +38,11 @@ server.get('/data', (req, res) => {
             eventLog,
             eventListeners,
             systemRuns,
-            propertyRegistry,
+            propertyRegistry: await propertyRegistry.promise,
         }
-    }).end()
+    }
+
+    res.send(data).end()
 })
 
 server.post('/send', express.raw({ type: () => true }), (req, res) => {

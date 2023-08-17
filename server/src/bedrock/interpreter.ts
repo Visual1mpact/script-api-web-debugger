@@ -107,22 +107,7 @@ export default class BedrockInterpreter {
 
     eventListenersLogLimit = 30
     eventListenersAutoclear = 10
-    eventListeners: Record<'world' | 'system',
-        Record<'before' | 'after',
-            Record<string, {
-                clearCache: number[]
-                list: Map<number, {
-                    readonly fn: JSONInspect.Values.Function
-                    status: 'disable' | 'subscribe' | 'unsubscribe'
-                    readonly logs: {
-                        readonly tick: number
-                        readonly mode: Bedrock.Events['event_change']['mode']
-                        readonly stack: string
-                    }[]
-                }>
-            }>
-        >
-    > = {
+    eventListeners: NodeBedrockInterpreter.EventListeners = {
         world: { before: Object.create(null), after: Object.create(null) },
         system: { before: Object.create(null), after: Object.create(null) }
     }
@@ -130,18 +115,7 @@ export default class BedrockInterpreter {
     systemRunsLimit = 30
     systemRunsAutoclear = 100
     systemRunsClearCache: number[] = []
-    systemRuns: Map<number, {
-        readonly tick: number
-
-        readonly type: Bedrock.T_RunType
-        readonly duration: number
-
-        readonly fn: JSONInspect.Values.Function
-        readonly stack: string
-
-        status: 'add' | 'suspend' | 'clear'
-        clearStack?: string
-    }> = new Map
+    systemRuns: NodeBedrockInterpreter.SystemRuns = new Map
 
     propertyRegistry = new PromiseController<Bedrock.Events['property_registry']>
 
