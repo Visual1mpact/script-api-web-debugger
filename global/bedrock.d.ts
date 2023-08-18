@@ -22,12 +22,12 @@ declare namespace Bedrock {
 
             data: JSONInspect.All
             timing: {
-                functions: JSONInspect.Typed.To<
-                    Map<
-                        { id: number, fnRaw: string },
-                        { delta: number, errorRaw?: string }
-                    >
-                >
+                functions: {
+                    fn: JSONInspect.Values.Function
+                    fid: number
+                    time: number
+                    error?: JSONInspect.All
+                }[]
                 self: number
                 total: number
             }

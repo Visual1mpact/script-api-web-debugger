@@ -26,31 +26,30 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
         const dispatch = (data: any) => {
             const t0 = Date.now()
 
-            const ftiming = new Map<
-                { id: number, fnRaw: string },
-                { delta: number, errorRaw?: string }
-            >(
-                Array.from(listeners)
-                    .filter(([k, v]) => !v.disabled)
-                    .map(([id, {fn}]) => {
-                        const t = Date.now()
-                        try {
-                            fn(data)
+            const ftiming = Array.from(listeners)
+                .filter(([k, v]) => !v.disabled)
+                .map(([id, {fn}]) => {
+                    const t = Date.now()
+                    try {
+                        fn(data)
 
-                            const delta = Date.now() - t
-                            return [
-                                { id, fnRaw: JSON.stringify(inspectJSON(fn)) },
-                                { delta }
-                            ]
-                        } catch(e) {
-                            const delta = Date.now() - t
-                            return [
-                                { id, fnRaw: JSON.stringify(inspectJSON(fn)) },
-                                { delta, errorRaw: JSON.stringify(inspectJSON(e)) }
-                            ]
+                        const delta = Date.now() - t
+                        return {
+                            fn: inspectJSON(fn) as JSONInspect.Values.Function,
+                            fid: id,
+                            time: delta,
+                            error: undefined
                         }
-                    })
-            )
+                    } catch(e) {
+                        const delta = Date.now() - t
+                        return {
+                            fn: inspectJSON(fn) as JSONInspect.Values.Function,
+                            fid: id,
+                            time: delta,
+                            error: inspectJSON(e)
+                        }
+                    }
+                })
 
             const t1 = Date.now()
 
@@ -70,7 +69,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
 
                 data: jsondata,
                 timing: {
-                    functions: inspectJSON(ftiming) as any,
+                    functions: ftiming,
                     self: tSelf,
                     total: tTotal
                 }
