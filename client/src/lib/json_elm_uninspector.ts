@@ -119,7 +119,7 @@ export function uninspectFunction(fn: JSONInspect.Values.Function, noContent = f
                     classes: 'ins-obj-proto',
                     textContent: '[[Prototype]]'
                 }),
-                uninspectFunction(fn.extend)
+                uninspectFunction(fn.extend).elm
             ])
         }
 
