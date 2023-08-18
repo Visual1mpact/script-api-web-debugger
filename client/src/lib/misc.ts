@@ -2,10 +2,11 @@
  * Assigns properties from source to object only if source's properties is in the object
  * @param a Object to be assigned
  * @param b Source
+ * @param ignores Properties to be ignored
  */
-export function assignIfExist<A extends object, B>(a: A, b: B): A & Pick<B, keyof A & keyof B> {
+export function assignIfExist<A extends object, B, I extends string = never>(a: A, b: B, ignores: Array<I> | Set<I> = []): Replace<A, Pick<B, Exclude<keyof A & keyof B, I>>> {
     //@ts-ignore
-    for (const k in b) if (k in a) a[k] = b[k]
+    for (const k in b) if (k in a && !( Array.isArray(ignores) ? ignores.includes(k) : ignores.has(k) )) a[k] = b[k]
     return a as any
 }
 

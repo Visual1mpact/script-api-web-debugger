@@ -1,30 +1,32 @@
 import { Anchors, getOuterAnchor } from "./anchor.js"
-import { assignIfExist, insertAt, iterateLength, replaceElement } from "./misc.js"
+import { assignIfExist, insertAt } from "./misc.js"
 
 /**
  * Creates a new element
  * @param tagName Element tag name
  * @param opts Element options
+ * @param ignores Option properties to be ignored
+ * @param allowChildrens Appends childrens from options
  * @returns New element
  */
-export function element<T extends string>(tagName: T, opts?: ElementEditableObject | StringOrNodeOrArray): T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement {
+export function element<T extends string>(tagName: T, opts?: ElementEditableObject | StringOrNodeOrArray, ignores?: Set<string> | string[], allowChildrens = true): T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement {
     const elm = document.createElement(tagName)
     if (!opts) return elm as any
 
     if (opts instanceof Array) {
-        for (const d of opts)
+        if (allowChildrens) for (const d of opts)
             elm.append(typeof d === 'string' ? createText(d) : d)
     }
     else if (opts instanceof Node) {
-        elm.append(opts)
+        if (allowChildrens) elm.append(opts)
     }
     else if (typeof opts === 'string') {
-        elm.append(createText(opts))
+        if (allowChildrens) elm.append(createText(opts))
     }
     else if (opts) {
-        assignIfExist(elm, opts)
+        assignIfExist(elm, opts, ignores)
 
-        if (opts.childrens)
+        if (opts.childrens && allowChildrens)
             elm.replaceChildren(...opts.childrens)
         
         if (opts.classes)
@@ -48,6 +50,55 @@ export function createText(text?: string) {
 }
 
 /**
+ * Creates a new table
+ * @param tableOptions Table options
+ * @returns Table
+ */
+export function createTable(tableOptions: TableOptions) {
+    const table = element('table', tableOptions, ['thead', 'tbody', 'tfoot', 'caption'])
+
+    for (const k of ['thead', 'tbody', 'tfoot'] as TableKeys[]) {
+        const opts = tableOptions[k]
+        if (opts === undefined) continue
+
+        let section: HTMLTableSectionElement, init: TableSectionChildrensInit
+
+        if (Array.isArray(opts)) {
+            section = element(k, undefined, undefined, false)
+            init = opts
+        } else {
+            section = element(k, opts, undefined, false)
+            init = opts.init ?? []
+        }
+
+        for (const row of init) {
+            if (row instanceof HTMLTableRowElement) section.append(row)
+            else insertRow(section, undefined, row)
+        }
+        
+        table.appendChild(section)
+    }
+
+    if (tableOptions.caption) table.append(element('caption', tableOptions.caption))
+
+    return table
+}
+
+type TableKeys = 'thead' | 'tbody' | 'tfoot'
+type TableSectionChildrensInit = ( HTMLTableRowElement | StringOrNodeOrArray | ElementEditableObject )[]
+
+type TableOptions = ElementEditableObject
+    & {
+        [K in TableKeys]?: TableSectionChildrensInit
+            | ElementEditableObject & {
+                childrens?: undefined
+                init?: TableSectionChildrensInit
+            }
+    } & {
+        caption?: StringOrNodeOrArray | ElementEditableObject
+    }
+
+/**
  * Adds a row on a table section / table element
  * @param section Table section / table element
  * @param index Index where row will be inserted at in the collection
@@ -55,11 +106,11 @@ export function createText(text?: string) {
  * @returns New row
  */
 export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, index?: number | undefined, opts?: StringOrNodeOrArray | ElementEditableObject) {
-    const elm = insertAt(section, index, element('tr', opts))
+    const elm = insertAt(section, index, element('tr', opts, undefined, false))
 
-    for (const child of iterateLength(elm.childNodes)) {
-        if (child instanceof HTMLTableCellElement) continue
-        replaceElement(child, element('td')).appendChild(child)
+    for (const child of childrens(opts)) {
+        if (child instanceof HTMLTableCellElement) elm.append(child)
+        else elm.insertCell().append(child)
     }
 
     return elm
@@ -103,6 +154,23 @@ export function createTooltip<T extends HTMLElement>(base: HTMLElement, tooltip:
     })
 
     return tooltip
+}
+
+function* childrens(opts?: StringOrNodeOrArray | ElementEditableObject) {
+    if (opts instanceof Array) {
+        for (const d of opts)
+            yield typeof d === 'string' ? createText(d) : d
+    }
+    else if (opts instanceof Node) {
+        yield opts
+    }
+    else if (typeof opts === 'string') {
+        yield createText(opts)
+    }
+    else if (opts?.childrens) {
+        for (const d of opts.childrens)
+            yield typeof d === 'string' ? createText(d) : d
+    }
 }
 
 export type StringOrNodeOrArray = string | Node | (string | Node)[]
