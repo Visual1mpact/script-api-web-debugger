@@ -53,7 +53,7 @@ async function sendInput(value: string) {
     actDel.addEventListener('click', () => elm.remove(), { once: true })
 
     try {
-        const res = await fetchThrow('/session/sendeval', {
+        const res = await fetchThrow('/sendeval', {
             method: 'POST',
             body: value
         })
@@ -67,7 +67,7 @@ async function sendInput(value: string) {
     }
 }
 
-// handlers
+// inputs
 
 input.addEventListener('keypress', ({ charCode, ctrlKey }) => {
     if (charCode !== 13 || !input.value || !ctrlKey) return

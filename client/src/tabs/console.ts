@@ -1,38 +1,65 @@
-import { element, insertRow } from "../lib/element.js";
+import { createText, element, insertRow } from "../lib/element.js";
 import { uninspectJSONToElement } from "../lib/elminspector.js";
-import { fetchThrow, getIdThrow, sleep } from "../lib/misc.js";
+import { getIdThrow } from "../lib/misc.js";
+import init from "../init.js";
 import { bedrockEvents } from "../sse.js";
 
-const logLevelColor: Record<LogLevel, string> = {
-    log: 'white',
-    info: 'cyan',
-    warn: 'yellow',
-    error: 'lightcoral'
+class ConsoleList {
+    static readonly table = getIdThrow('console-list', HTMLTableElement)
+    static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
+
+    static logLimit = 200
+    static logLevelColor: Record<LogLevel, string> = {
+        log: 'white',
+        info: 'cyan',
+        warn: 'yellow',
+        error: 'lightcoral'
+    }
+
+    static handle(data: Bedrock.Events['console']) {
+        return new ConsoleList(data.level, data.content, data.stack)
+    }
+
+    constructor(level: LogLevel = 'log', datas: JSONInspect.All[] = [], stack = '') {
+        this.row = insertRow(ConsoleList.list, 0, {
+            childrens: [
+                this.#elm_level = element('td', {
+                    styles: { 'color': ConsoleList.logLevelColor[level] },
+                    textContent: level
+                }),
+                this.#elm_data  = element('td', datas.map(v => v.type === 'string' ? element('span', v.value) : uninspectJSONToElement(v))),
+                this.#elm_stack = createText(stack.replace(/^    at /gm, ''))
+            ],
+            datas: {
+                level: level
+            }
+        })
+    
+        if (ConsoleList.list.rows.length > ConsoleList.logLimit) ConsoleList.list.deleteRow(-1)
+    }
+
+    readonly row: HTMLTableRowElement
+    #elm_level
+    #elm_data
+    #elm_stack
+
+    get level() { return this.row.dataset.level as LogLevel }
+    set level(v) {
+        this.row.dataset.level = v
+        this.#elm_level.style.color = ConsoleList.logLevelColor[v]
+        this.#elm_level.textContent = v
+    }
+
+    get stack() { return this.#elm_stack.textContent }
+    set stack(v) { this.#elm_stack.textContent = v }
+
+    setContent(datas: JSONInspect.All[])  {
+        this.#elm_data.replaceChildren(...datas.map(v => v.type === 'string' ? element('span', v.value) : uninspectJSONToElement(v)))
+        return this
+    }
 }
 
-const table = getIdThrow('console-list', HTMLTableElement)
-const list = table.tBodies.item(0) ?? table.createTBody()
-const logLimit = 200
-
-function handle(data: Bedrock.Events['console']) {
-    insertRow(list, 0, {
-        childrens: [
-            element('td', {
-                styles: { 'color': logLevelColor[data.level] },
-                textContent: data.level
-            }),
-            element('td', data.content.map(v => v.type === 'string' ? element('span', v.value) : uninspectJSONToElement(v))),
-            data.stack.replace(/^    at /gm, '')
-        ],
-        datas: {
-            level: data.level
-        }
-    })
-
-    if (list.rows.length > logLimit) list.deleteRow(-1)
-}
-
-// handlers
+// inputs
 
 getIdThrow('console-log-opts').addEventListener('click', (ev) => {
     const elm = ev.target
@@ -42,28 +69,16 @@ getIdThrow('console-log-opts').addEventListener('click', (ev) => {
         && elm.dataset.value
     )) return
 
-    table.classList[!elm.checked ? 'add' : 'remove'](`no-level-${elm.dataset.value}`)
+    ConsoleList.table.classList[!elm.checked ? 'add' : 'remove'](`no-level-${elm.dataset.value}`)
 })
 
 const showStack = getIdThrow('console-log-show-stack', HTMLInputElement)
 showStack.addEventListener('change', (ev) => {
-    table.classList[!showStack.checked ? 'add' : 'remove'](`no-stack`)
+    ConsoleList.table.classList[!showStack.checked ? 'add' : 'remove'](`no-stack`)
 })
 
-// init & sse
+// data
 
-const init = fetchThrow('/session/script/console')
-    .then(async v => {
-        const text = await v.text()
-        for (const [i, d] of text.split(/\r?\n/).slice(-logLimit).entries()) {
-            if (!d) continue
-            handle(JSON.parse(d))
-            if (i % 5 === 0) await sleep(1)
-        }
-    })
-    .catch(e => console.error(e))
+for (const d of init.script.consoleLog) ConsoleList.handle(d)
 
-bedrockEvents.addEventListener('console', async ({detail: data}) => {
-    await init
-    handle(data)
-})
+bedrockEvents.addEventListener('console', async ({detail: data}) => ConsoleList.handle(data))

@@ -1,18 +1,59 @@
-import { element, insertRow } from "../lib/element.js";
+import init from "../init.js";
+import { createText, element, insertRow } from "../lib/element.js";
 import { fetchThrow, getIdThrow } from "../lib/misc.js";
 import { sseEvents } from "../sse.js";
 
-const logLevelColor: Record<LogLevel | 'unknown', string> = {
-    log: 'white',
-    unknown: 'white',
-    info: 'cyan',
-    warn: 'yellow',
-    error: 'lightcoral'
+class BDSList {
+    static readonly table = getIdThrow('bds-log-list', HTMLTableElement)
+    static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
+
+    static logLimit = 300
+    static logLevelColor: Record<LogLevelOrUnknown, string> = {
+        log: 'white',
+        unknown: 'white',
+        info: 'cyan',
+        warn: 'yellow',
+        error: 'lightcoral'
+    }
+
+    static handle(data: Bedrock.ProcessEvents['line']) {
+        return new BDSList(data.level, data.level === 'unknown' ? data.raw : data.line)
+    }
+    
+    constructor(level: LogLevelOrUnknown = 'unknown', message = '') {
+        this.row = insertRow(BDSList.list, undefined, {
+            childrens: [
+                this.#elm_level   = element('td', {
+                    styles: { color: BDSList.logLevelColor[level] },
+                    textContent: level,
+                }),
+                this.#elm_message = createText(message)
+            ],
+            datas: {
+                level
+            }
+        })
+
+        if (BDSList.list.rows.length > BDSList.logLimit) BDSList.list.deleteRow(-1)
+
+    }
+
+    readonly row: HTMLTableRowElement
+    #elm_level
+    #elm_message
+
+    get level() { return this.row.dataset.level as LogLevel }
+    set level(v) {
+        this.row.dataset.level = v
+        this.#elm_level.style.color = BDSList.logLevelColor[v]
+        this.#elm_level.textContent = v
+    }
+
+    get message() { return this.#elm_message.textContent }
+    set message(v) { this.#elm_message.textContent = v }
 }
 
-const table = getIdThrow('bds-log-list', HTMLTableElement)
-const list = table.tBodies.item(0) ?? table.createTBody()
-const logLimit = 300
+// inputs
 
 const input = getIdThrow('bds-input', HTMLInputElement)
 const send = getIdThrow('bds-send', HTMLButtonElement)
@@ -27,31 +68,8 @@ const stats = {
 
 const kill = getIdThrow('bds-signal-kill', HTMLButtonElement)
 
-function insData(data: Bedrock.ProcessEvents['line']) {
-    const message = data.level === 'unknown' ? data.raw : data.line
-
-    insertRow(list, undefined, {
-        childrens: [
-            element('td', {
-                styles: { color: logLevelColor[data.level] },
-                textContent: data.level,
-            }),
-            message
-        ],
-        datas: {
-            level: data.level
-        }
-    })
-    
-    if (list.rows.length > logLimit) list.deleteRow(0)
-}
-
-// handlers
-
-// handle input
-
 function sendInput(value: string) {
-    fetch('/session/send', {
+    fetchThrow('/session/send', {
         method: 'POST',
         body: value
     })
@@ -67,31 +85,9 @@ send.addEventListener('click', () => {
     sendInput(input.value)
 })
 
-// handle process
-
-fetchThrow('/process')
-    .then(async v => {
-        const data = await v.json()
-
-        stats.pid.textContent = data.pid
-        stats.status.textContent = data.exitSignal ? 'killed' : data.exitCode !== null ? 'stopped' : 'running'
-        stats.kc.textContent = data.exitCode ?? '-'
-        stats.ks.textContent = data.exitSignal ?? '-'
-        stats.sid.textContent = data.sessionID ?? '-'
-    })
-
-sseEvents.addEventListener('exit', ({ detail: { code, signal } }) => {
-    stats.status.textContent = signal ? 'killed' : 'stopped'
-
-    stats.kc.textContent = String(code ?? '-')
-    stats.ks.textContent = signal ?? '-'
-})
-
 kill.addEventListener('click', () => {
-    fetch('/session/kill', { method: 'POST' })
+    fetchThrow('/session/kill', { method: 'POST' })
 })
-
-// handle filter
 
 getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
     const elm = ev.target
@@ -101,21 +97,22 @@ getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
         && elm.dataset.value
     )) return
 
-    table.classList[!elm.checked ? 'add' : 'remove'](`no-level-${elm.dataset.value}`)
+    BDSList.table.classList[!elm.checked ? 'add' : 'remove'](`no-level-${elm.dataset.value}`)
 })
 
+// data
 
-// sse
+stats.pid.textContent = init.pid + ''
+stats.status.textContent = init.signalCode ? 'killed' : init.exitCode !== null ? 'stopped' : 'running'
+stats.kc.textContent = init.exitCode + '' || '-'
+stats.ks.textContent = init.signalCode ?? '-'
 
-const init = fetchThrow('/session/bedrock')
-    .then(async v => {
-        const text = await v.text()
-        for (const d of text.split(/\r?\n/).slice(-logLimit)) if (d) insData(JSON.parse(d))
-    })
-    .catch(e => console.error(e))
+for (const d of init.consoleLog) BDSList.handle(d)
 
-sseEvents.addEventListener('line', async ({detail: data}) => {
-    await init
-    insData(data)
+sseEvents.addEventListener('line', ({detail: data}) => BDSList.handle(data))
+sseEvents.addEventListener('exit', ({ detail: { code, signal } }) => {
+    stats.status.textContent = signal ? 'killed' : 'stopped'
+
+    stats.kc.textContent = String(code ?? '-')
+    stats.ks.textContent = signal ?? '-'
 })
-
