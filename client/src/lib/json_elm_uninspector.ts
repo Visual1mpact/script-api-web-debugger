@@ -108,9 +108,23 @@ export function uninspectFunction(fn: JSONInspect.Values.Function, noContent = f
     const tooltipElm = createTooltip(nameElm,  element('span', { classes: 'ins-plain', textContent: src }), 'topcenter')
 
     // content
-    const contentElm = noContent
-        ? createText('')
-        : uninspectObject({ proto: '', properties: fn.properties }).elm
+    let contentElm
+    if (noContent) contentElm = createText('')
+    else {
+        const data = uninspectObject({ proto: '', properties: fn.properties })
+
+        if (fn.extend) {
+            insertRow(data.tbody, undefined, [
+                element('span', {
+                    classes: 'ins-obj-proto',
+                    textContent: '[[Prototype]]'
+                }),
+                uninspectFunction(fn.extend)
+            ])
+        }
+
+        contentElm = data.elm
+    }
 
     return {
         elm: element('span', [ nameElm, contentElm ]),
