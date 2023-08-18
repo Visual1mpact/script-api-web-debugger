@@ -232,7 +232,7 @@ class EventListeners {
             } break
         }
 
-        data.writeLog(ev.tick, 'subscribe', ev.stack)
+        data.writeLog(ev.tick, ev.mode, ev.stack)
     }
 
     constructor(isSystem: boolean, isBefore: boolean, name: string, fid: number, fn: JSONInspect.Values.Function, tick = 0) {
@@ -387,7 +387,7 @@ class EventListeners {
     writeLog(tick: number, action: string, stack: string) {
         insertRow(this.#elm_detail_log_list, 0, [
             tick + '',
-            'subscribe',
+            action,
             stack
         ])
 
