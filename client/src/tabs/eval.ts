@@ -1,5 +1,5 @@
 import { element } from "../lib/element.js";
-import { uninspectJSONToElement } from "../lib/elminspector.js";
+import { uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
 import { fetchThrow, getIdThrow } from "../lib/misc.js";
 
 const list = getIdThrow('eval-list')

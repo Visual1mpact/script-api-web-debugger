@@ -1,6 +1,6 @@
 import { ChartDataset } from "chart.js";
 import { createText, element, insertCell, insertRow } from "../lib/element.js";
-import { uninspectFunction, uninspectJSONToElement } from "../lib/elminspector.js";
+import { uninspectFunction, uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
 import { fetchThrow, getIdThrow, insertAt, sleep } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
 import { stableAverage, valueBar as valueBar } from "../lib/misc2.js";

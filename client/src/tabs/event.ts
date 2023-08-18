@@ -1,6 +1,6 @@
 import init from "../init.js";
 import { createTable, createText, element, insertCell, insertRow } from "../lib/element.js";
-import { uninspectFunction, uninspectJSONToElement } from "../lib/elminspector.js";
+import { uninspectFunction, uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
 import { getIdThrow } from "../lib/misc.js";
 import { valueBar } from "../lib/misc2.js";
 import { bedrockEvents } from "../sse.js";

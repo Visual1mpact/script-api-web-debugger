@@ -1,5 +1,5 @@
 import { element, insertRow } from "../lib/element.js";
-import { uninspectJSON } from "../lib/jsoninspector.js";
+import { uninspectJSON } from "../lib/json_uninspector.js";
 import { fetchThrow, getIdThrow } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
 
