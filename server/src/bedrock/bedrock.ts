@@ -8,9 +8,11 @@ import timersp = require('timers/promises')
 import TypedEventEmitter from '../lib/typedevm.js'
 
 export default class NodeBedrock {
-    constructor(dir: string) {
-        this.process = cp.spawn(dir, {
-            cwd: path.resolve(path.parse(dir).dir),
+    constructor(target: string) {
+        target = path.isAbsolute(target) ? target : path.join(process.cwd(), '..', target)
+
+        this.process = cp.spawn(target, {
+            cwd: path.resolve(path.parse(target).dir),
             shell: false,
             detached: true,
             env: {

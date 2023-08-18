@@ -5,6 +5,8 @@ let dir = process.argv.slice(2).join(' ')
 if (!dir) throw new Error('unhook requires a directory argument')
 if (dir[0] === '"' && dir.at(-1) === '"') dir = dir.slice(1, -1)
 
+dir = path.isAbsolute(dir) ? dir : path.join(process.cwd(), '..', dir)
+
 console.time('unhooked')
 
 console.log('getting pack uuid...')

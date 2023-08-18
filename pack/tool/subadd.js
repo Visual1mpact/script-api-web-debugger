@@ -5,6 +5,8 @@ let dir = process.argv.slice(2).join(' ')
 if (!dir) throw new Error('hook requires a directory argument')
 if (dir[0] === '"' && dir.at(-1) === '"') dir = dir.slice(1, -1)
 
+dir = path.isAbsolute(dir) ? dir : path.join(process.cwd(), '..', dir)
+
 console.time('added')
 
 console.log('getting pack script entry file...')
@@ -14,9 +16,12 @@ if (!entry) throw new Error('X unable to find script entry file. Is this a resou
 
 console.log('copying files...')
 const subscriptPath = path.join('pack', 'subpacks', 'subscript')
+
 fs.rmSync(subscriptPath, { recursive: true, force: true })
 fs.mkdirSync(subscriptPath, { recursive: true })
+
 fs.cpSync(dir, subscriptPath, { recursive: true, force: true })
+
 fs.rmSync(path.join(subscriptPath, 'manifest.json'), { force: true })
 fs.rmSync(path.join(subscriptPath, 'pack_icon.png'), { force: true })
 

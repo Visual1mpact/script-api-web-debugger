@@ -49,6 +49,8 @@ function folder(dir) {
     return data.dir
 }
 
+process.chdir(path.join(__dirname, '..'))
+
 const packageArr = Object.entries(config.packages)
 
 const packageDev = packages( packageArr.filter( ([, data]) => typeof data === 'string' || data.mode === 'npm-dev' ) )
