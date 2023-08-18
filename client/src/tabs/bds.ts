@@ -68,7 +68,7 @@ const stats = {
 const kill = getIdThrow('bds-signal-kill', HTMLButtonElement)
 
 function sendInput(value: string) {
-    fetchThrow('/session/send', {
+    fetchThrow('/send', {
         method: 'POST',
         body: value
     })
