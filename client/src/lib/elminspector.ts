@@ -46,36 +46,39 @@ function uninspectObject(val: JSONInspect.ObjectBase) {
     })
     const tbody = table.createTBody()
 
-    // properties
-    for (const [k, v] of val.properties) {
-        insertRow(tbody, undefined, [
-            uninspectObjectKey(k),
-            uninspectJSONToElement(v)
-        ])
-    }
-
-    // prototype
-    if (val.proto) {
-        insertRow(tbody, undefined, [
-            element('span', {
-                classes: 'ins-obj-proto',
-                textContent: '[[Prototype]]'
-            }),
-            typeof val.proto === 'string'
-                ? element('span', {
-                    classes: ['ins-obj-name'],
-                    textContent: val.proto
-                })
-                : uninspectObject(val.proto).elm
-        ])
-    }
-
     // open / close
     const btn = element('button', {
         classes: 'ins-button',
         textContent: ' <expand> '
     })
     btn.addEventListener('click', () => btn.textContent = (table.hidden = !table.hidden) ? ' <expand> ' : ' <collapse> ')
+
+    const once = new Promise(res => btn.addEventListener('click', res, { once: true }))
+    once.finally(() => {
+        // properties
+        for (const [k, v] of val.properties) {
+            insertRow(tbody, undefined, [
+                uninspectObjectKey(k),
+                uninspectJSONToElement(v)
+            ])
+        }
+
+        // prototype
+        if (val.proto) {
+            insertRow(tbody, undefined, [
+                element('span', {
+                    classes: 'ins-obj-proto',
+                    textContent: '[[Prototype]]'
+                }),
+                typeof val.proto === 'string'
+                    ? element('span', {
+                        classes: ['ins-obj-name'],
+                        textContent: val.proto
+                    })
+                    : uninspectObject(val.proto).elm
+            ])
+        }
+    })
 
     return {
         elm: element('span', [
@@ -86,7 +89,8 @@ function uninspectObject(val: JSONInspect.ObjectBase) {
             '{', btn, table, '}'
         ]),
         table,
-        tbody
+        tbody,
+        once
     }
 }
 
@@ -164,43 +168,46 @@ export function uninspectJSONToElement(data: JSONInspect.All): HTMLElement {
             })
 
         case 'array': {
-            const { elm, tbody } = uninspectObject(data)
-
-            if (data.values.length <= 100) {
-                for (const [i, value] of data.values.entries())
-                    insertRow(tbody, i, [ String(i), uninspectJSONToElement(value) ])
-            } else {
-                const chk = 100
-                let k = 0
-                for (let i = 0; i < data.values.length; i += chk) {
-                    const { elm, tbody: sub } = uninspectObject({
-                        proto: undefined,
-                        properties: []
-                    })
-
-                    for (const [j, value] of data.values.slice(i, i + chk).entries())
-                        insertRow(sub, undefined, [ `[${i+j}]`, uninspectJSONToElement(value) ])
-                    insertRow(tbody, k++, [ `[${i}..${i+chk-1}]`, elm ])
+            const { elm, tbody, once } = uninspectObject(data)
+            once.finally(() => {
+                if (data.values.length <= 100) {
+                    for (const [i, value] of data.values.entries())
+                        insertRow(tbody, i, [ String(i), uninspectJSONToElement(value) ])
+                } else {
+                    const chk = 100
+                    let k = 0
+                    for (let i = 0; i < data.values.length; i += chk) {
+                        const { elm, tbody: sub } = uninspectObject({
+                            proto: undefined,
+                            properties: []
+                        })
+    
+                        for (const [j, value] of data.values.slice(i, i + chk).entries())
+                            insertRow(sub, undefined, [ `[${i+j}]`, uninspectJSONToElement(value) ])
+                        insertRow(tbody, k++, [ `[${i}..${i+chk-1}]`, elm ])
+                    }
                 }
-            }
+            })
 
             return elm
         }
 
         case 'set': {
-            const { elm, tbody } = uninspectObject(data)
-
-            for (const [i, v] of data.values.entries())
+            const { elm, tbody, once } = uninspectObject(data)
+            once.finally(() => {
+                for (const [i, v] of data.values.entries())
                 insertRow(tbody, i, [ '>', uninspectJSONToElement(v) ])
+            })
 
             return elm
         }
 
         case 'map': {
-            const { elm, tbody } = uninspectObject(data)
-
-            for (const [i, [k, v]] of data.entries.entries())
+            const { elm, tbody, once } = uninspectObject(data)
+            once.finally(() => {
+                for (const [i, [k, v]] of data.entries.entries())
                 insertRow(tbody, i, [ uninspectJSONToElement(k), uninspectJSONToElement(v) ])
+            })
 
             return elm
         }
