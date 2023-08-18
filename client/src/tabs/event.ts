@@ -135,12 +135,12 @@ class EventLogList {
                 error ? uninspectJSONToElement(error) : '-'
             ])
 
-            t++
+            c ++
             t += time
         }
 
         this.#elm_listener_bar.style.background = valueBar(c, [128,192,255], [64,64,255], 8)
-        this.#elm_listener_bar.textContent = c + 'ms'
+        this.#elm_listener_bar.textContent = c + ''
 
         this.#elm_timing_bar.style.background = timeBar(t)
         this.#elm_timing_bar.textContent = t + 'ms'
