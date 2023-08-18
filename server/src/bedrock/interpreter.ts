@@ -31,7 +31,7 @@ export default class BedrockInterpreter {
 
                     let eventData = events.get(name)
                     if (!eventData) events.set(name, eventData = {
-                        clearCache: [],
+                        clearCache: new Set,
                         list: new Map
                     })
 
@@ -45,7 +45,7 @@ export default class BedrockInterpreter {
                         // clear
                         if (listeners.size > this.eventListenersAutoclear) {
                             for (const id of eventData.clearCache) listeners.delete(id)
-                            eventData.clearCache = []
+                            eventData.clearCache = new Set
                         }
                     }
 
@@ -54,8 +54,9 @@ export default class BedrockInterpreter {
                     data.logs.push({ tick, mode, stack })
                     if (data.logs.length > this.eventListenersLogLimit) data.logs.shift()
 
-                    // add to clear cache (if unsubscribe)
-                    if (mode === 'unsubscribe') eventData.clearCache.push(fid)
+                    // add / clear cache
+                    if (mode === 'unsubscribe') eventData.clearCache.add(fid)
+                    if (mode === 'subscribe') eventData.clearCache.delete(fid)
                 } break
 
                 case 'property_registry': {
@@ -74,7 +75,7 @@ export default class BedrockInterpreter {
                         // autoclear
                         if (runs.size > this.systemRunsAutoclear) {
                             for (const id of this.systemRunsClearCache) runs.delete(id)
-                            this.systemRunsClearCache = []
+                            this.systemRunsClearCache = new Set
                         }
                     }
 
@@ -82,7 +83,7 @@ export default class BedrockInterpreter {
                     data.status = mode === 'resume' ? 'add': mode
 
                     // add to clear cache (if clear)
-                    if (mode === 'clear') this.systemRunsClearCache.push(id)
+                    if (mode === 'clear') this.systemRunsClearCache.add(id)
                 } break
 
                 case 'ready': {
@@ -113,7 +114,7 @@ export default class BedrockInterpreter {
     eventListenersAutoclear = 10
     eventListeners: NodeBedrockInterpreter.EventListenerLists<
         Map<string, {
-            clearCache: number[],
+            clearCache: Set<number>,
             list: Map<number, NodeBedrockInterpreter.EventListenerData>
         }>
     > = {
@@ -123,7 +124,7 @@ export default class BedrockInterpreter {
 
     systemRunsLimit = 30
     systemRunsAutoclear = 100
-    systemRunsClearCache: number[] = []
+    systemRunsClearCache = new Set<number>()
     systemRuns: Map<number, NodeBedrockInterpreter.SystemRunData> = new Map
 
     propertyRegistry = new PromiseController<Bedrock.Events['property_registry']>
