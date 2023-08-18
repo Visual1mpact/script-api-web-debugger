@@ -36,6 +36,13 @@ export function element<T extends string>(tagName: T, opts?: ElementEditableObje
             for (const [k, v] of Array.isArray(opts.styles) || opts.styles instanceof Map ? opts.styles : Object.entries(opts.styles)) elm.style.setProperty(k, v)
     
         if (opts.datas) Object.assign(elm.dataset, opts.datas)
+
+        if (opts.on) {
+            for (const [k, v] of Object.entries(opts.on)) {
+                if (typeof v === 'function') elm.addEventListener(k, v)
+                else elm.addEventListener(k, v.listener, v.options)
+            }
+        }
     }
 
     return elm as any
@@ -198,13 +205,20 @@ export type ElementEditableObject<T extends HTMLElement = HTMLElement, K extends
             | K
         >
     >
-    & {
+    & Partial<{
         [x: string]: any
-        classes?: string | Iterable<string>
-        childrens?: Iterable<Node | string>
-        styles?: Record<string, string>
+        classes: string | Iterable<string>
+        childrens: Iterable<Node | string>
+        styles: Record<string, string>
             | Map<string, string>
             | [string, string][]
-        datas?: Record<string, string>
-    }
+        datas: Record<string, string>
+        on: {
+            [K in string]: ( (<T extends Event>(ev: T) => any) )
+                | {
+                    listener: <T extends Event>(ev: T) => any
+                    options?: AddEventListenerOptions
+                }
+        }
+    }>
 )

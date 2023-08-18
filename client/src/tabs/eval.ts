@@ -7,7 +7,7 @@ const input = getIdThrow('eval-input', HTMLTextAreaElement)
 const send = getIdThrow('eval-send', HTMLButtonElement)
 
 async function sendInput(value: string) {
-    let retElm, resElm, actDel
+    let retElm, resElm
     const elm = element('div', {
         classes: 'noflow',
         childrens: [
@@ -32,7 +32,17 @@ async function sendInput(value: string) {
                     'gap': '8px',
                 },
                 childrens: [
-                    actDel = element('button', 'delete')
+                    element('button', {
+                        textContent: 'delete',
+                        on: {
+                            click: {
+                                listener() { elm.remove() },
+                                options: {
+                                    once: true
+                                }
+                            }
+                        }
+                    })
                 ]
             }),
             retElm = element('span', {
@@ -49,8 +59,6 @@ async function sendInput(value: string) {
         ]
     })
     list.append(elm)
-
-    actDel.addEventListener('click', () => elm.remove(), { once: true })
 
     try {
         const res = await fetchThrow('/sendeval', {
