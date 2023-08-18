@@ -62,8 +62,7 @@ const stats = {
     pid: getIdThrow('bds-stats-pid'),
     status: getIdThrow('bds-stats-status'),
     kc: getIdThrow('bds-stats-kc'),
-    ks: getIdThrow('bds-stats-ks'),
-    sid: getIdThrow('bds-stats-sid')
+    ks: getIdThrow('bds-stats-ks')
 }
 
 const kill = getIdThrow('bds-signal-kill', HTMLButtonElement)
