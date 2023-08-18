@@ -122,7 +122,6 @@ export default class BedrockInterpreter {
         system: { before: Object.create(null), after: Object.create(null) }
     }
 
-    systemRunsLimit = 30
     systemRunsAutoclear = 100
     systemRunsClearCache = new Set<number>()
     systemRuns: Map<number, NodeBedrockInterpreter.SystemRunData> = new Map

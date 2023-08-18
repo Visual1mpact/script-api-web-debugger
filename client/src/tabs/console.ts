@@ -8,7 +8,7 @@ class ConsoleList {
     static readonly table = getIdThrow('console-list', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 
-    static logLimit = 200
+    static logLimit = 300
     static logLevelColor: Record<LogLevel, string> = {
         log: 'white',
         info: 'cyan',
