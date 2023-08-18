@@ -89,8 +89,8 @@ export default class BedrockInterpreter {
                 case 'ready': {
                     this.eventLog = []
                     this.eventListeners = {
-                        world: { before: Object.create(null), after: Object.create(null) },
-                        system: { before: Object.create(null), after: Object.create(null) }
+                        world: { before: new Map, after: new Map },
+                        system: { before: new Map, after: new Map }
                     }
                     this.systemRuns.clear()
                     this.propertyRegistry.resolve((this.propertyRegistry = new PromiseController).promise)
@@ -118,8 +118,8 @@ export default class BedrockInterpreter {
             list: Map<number, NodeBedrockInterpreter.EventListenerData>
         }>
     > = {
-        world: { before: Object.create(null), after: Object.create(null) },
-        system: { before: Object.create(null), after: Object.create(null) }
+        world: { before: new Map, after: new Map },
+        system: { before: new Map, after: new Map }
     }
 
     systemRunsAutoclear = 100
