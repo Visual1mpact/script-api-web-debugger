@@ -1,25 +1,160 @@
-import { createText, element, insertCell, insertRow } from "../lib/element.js";
+import init from "../init.js";
+import { createTable, createText, element, insertCell, insertRow } from "../lib/element.js";
 import { uninspectFunction, uninspectJSONToElement } from "../lib/elminspector.js";
-import { uninspectJSON } from "../lib/jsoninspector.js";
-import { fetchThrow, getIdThrow, sleep } from "../lib/misc.js";
+import { getIdThrow } from "../lib/misc.js";
 import { valueBar } from "../lib/misc2.js";
 import { bedrockEvents } from "../sse.js";
+import { sendEvalThrowable } from "../util.js";
 
 function timeBar(v: number)  {
     return valueBar(v, [255, 255, 64], [255, 64, 64], 50)
 }
 
+class EventLogList {
+    static readonly table = getIdThrow('event-log', HTMLTableElement)
+    static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
+
+    static logLimit = 100
+
+    static handle(ev: Bedrock.Events['event']) {
+        const data = new EventLogList(ev.name, ev.isSystem, ev.isBefore, ev.tick)
+        data.setData(ev.data)
+        data.setTiming(ev.timing.functions)
+        return data
+    }
+
+    constructor(name: string, isSystem = false, isBefore = false, tick = 0) {
+        const row = this.row = insertRow(EventLogList.list, 0, {
+            childrens: [
+                this.#elm_tick         = createText(String(tick)),
+                this.#elm_type         = createText(isSystem ? 'system' : 'world'),
+                this.#elm_priority     = createText(isBefore ? 'before' : 'after'),
+                this.#elm_name         = createText(name),
+                this.#elm_listener_bar = element('td'),
+                this.#elm_timing_bar   = element('td'),
+            ],
+            datas: {
+                type     : isSystem ? 'system' : 'world',
+                priority : isBefore ? 'before' : 'after',
+                name     : name
+            },
+            on: {
+                click: () => detailRow.hidden = !detailRow.hidden
+            }
+        })
+
+        // detail
+
+        const detailRow = this.detailRow = insertRow(EventLogList.list, 1, {
+            classes: 'detail',
+            hidden: true
+        })
+
+        const detailTimingTable = createTable({
+            classes: ['row-2', 'border', 'fill-x'],
+            thead: [[ 'function', 'delay', 'error?' ]]
+        })
+        this.#elm_detail_timing_list = detailTimingTable.createTBody()
+
+        const detailData = this.#elm_detail_data = element('div', { classes: 'flow-x' })
+
+        insertCell(detailRow, undefined, {
+            colSpan: row.cells.length,
+            childrens: [
+                element('div', [
+                    detailTimingTable,
+                    element('br'),
+                    element('div', 'data:'),
+                    detailData
+                ])
+            ]
+        })
+
+        if (EventLogList.list.rows.length > EventLogList.logLimit * 2) {
+            EventLogList.list.deleteRow(-1)
+            EventLogList.list.deleteRow(-1)
+        }
+    }
+
+    readonly row: HTMLTableRowElement
+    #elm_tick
+    #elm_type
+    #elm_priority
+    #elm_name
+    #elm_listener_bar
+    #elm_timing_bar
+
+    readonly detailRow: HTMLTableRowElement
+    #elm_detail_timing_list
+    #elm_detail_data
+
+    get tick() { return Number(this.#elm_tick.textContent) }
+    set tick(v) { this.#elm_tick.textContent = String(v) }
+
+    get isSystem() { return this.row.dataset.type === 'system' }
+    set isSystem(v) {
+        const str = v ? 'system' : 'world'
+        this.row.dataset.type = str
+        this.#elm_type.textContent = str
+    }
+
+    get isBefore() { return this.row.dataset.priority === 'before' }
+    set isBefore(v) {
+        const str = v ? 'before' : 'after'
+        this.row.dataset.priority = str
+        this.#elm_priority.textContent = str
+    }
+
+    get name() { return this.row.dataset.name ?? '' }
+    set name(v) {
+        this.row.dataset.name = v
+        this.#elm_name.textContent = v
+    }
+
+    setData(data: JSONInspect.All) {
+        this.#elm_detail_data.replaceChildren(uninspectJSONToElement(data))
+        return this
+    }
+
+    setTiming(list: Iterable<{
+        fn: JSONInspect.Values.Function
+        time: number
+        error?: JSONInspect.All
+    }>) {
+        let c = 0, t = 0
+
+        this.#elm_detail_timing_list.replaceChildren()
+
+        for (const { fn, time, error } of list) {
+            insertRow(this.#elm_detail_timing_list, undefined, [
+                uninspectFunction(fn, true).elm,
+                element('td', {
+                    styles: { 'background': timeBar(time)},
+                    textContent: time + 'ms'
+                }),
+                error ? uninspectJSONToElement(error) : '-'
+            ])
+
+            t++
+            t += time
+        }
+
+        this.#elm_listener_bar.style.background = valueBar(c, [128,192,255], [64,64,255], 8)
+        this.#elm_listener_bar.textContent = c + 'ms'
+
+        this.#elm_timing_bar.style.background = timeBar(t)
+        this.#elm_timing_bar.textContent = t + 'ms'
+
+        return this
+    }
+}
+
 {
-    const table = getIdThrow('event-log', HTMLTableElement)
-    const tbody = table.tBodies.item(0) ?? table.createTBody()
-    const logLimit = 200
-
     const opts = getIdThrow('ev-opts')
-
     const optsName = getIdThrow('ev-fi-name', HTMLInputElement)
     const optsNameStyle = document.head.appendChild(element('style'))
 
-    // handler
+    // inputs
 
     optsName.addEventListener('change', () => {
         const fi = optsName.value && optsName.validity.valid
@@ -36,109 +171,231 @@ function timeBar(v: number)  {
         )) return
 
         const {type, value} = elm.dataset
-        table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
+        EventLogList.table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
     })
 
-    function handle(ev: Bedrock.Events['event']) {
-        const row = insertRow(tbody, 0, {
+    // init & sse
+
+    for (const d of init.script.eventLog) EventLogList.handle(d)
+
+    bedrockEvents.addEventListener('event', async ({detail: data}) => EventLogList.handle(data))
+}
+
+class EventListeners {
+    static readonly table = getIdThrow('event-lis-log', HTMLTableElement)
+    static readonly tbody = this.table.tBodies.item(0) ?? this.table.createTBody()
+
+    static readonly list = new Map<string, EventListeners>()
+
+    static autoflushThreshold = 100
+    static autoflushEnable = true
+    static #flushCache = new Set<string>()
+    static logLimit = 30
+
+    static flush() {
+        for (const id of this.#flushCache) EventListeners.list.delete(id)
+        this.#flushCache.clear()
+    }
+
+    static idOf(isSystem: boolean, isBefore: boolean, name: string, fid: number) {
+        return (isSystem ? 's' : 'w') + (isBefore ? 'b' : 'a') + '/' + name + '/' + fid.toString(36)
+    }
+
+    static handle(ev: Bedrock.Events['event_change']) {
+        const id = EventListeners.idOf(ev.isSystem, ev.isBefore, ev.name, ev.fid)
+        let data = EventListeners.list.get(id)
+        if (!data) EventListeners.list.set(id, data = new EventListeners(ev.isSystem, ev.isBefore, ev.name, ev.fid, ev.fn))
+        const { row, detailRow } = data
+
+        switch (ev.mode) {
+            case 'subscribe': {
+                data.subscribed = true
+
+                row.remove()
+                detailRow.remove()
+                EventListeners.tbody.prepend(detailRow)
+                EventListeners.tbody.prepend(row)
+
+                data.#elm_tick.textContent = ev.tick + ''
+            } break
+
+            case 'unsubscribe': {
+                data.subscribed = false
+            } break
+
+            case 'disable': {
+                data.disabled = true
+            } break
+
+            case 'enable': {
+                data.disabled = false
+            } break
+        }
+
+        data.writeLog(ev.tick, 'subscribe', ev.stack)
+    }
+
+    constructor(isSystem: boolean, isBefore: boolean, name: string, fid: number, fn: JSONInspect.Values.Function, tick = 0) {
+        const typeName = isSystem ? 'system' : 'world'
+        const priorityName = isBefore ? 'before' : 'after'
+        this.objRef = `eventListeners.${typeName}_${priorityName}.${name}.listeners.get(${fid})`
+
+        const row = this.row = insertRow(EventListeners.tbody, 0, {
             childrens: [
-                ev.tick + '',
-                ev.isSystem ? 'system' : 'world',
-                ev.isBefore ? 'before' : 'after',
-                ev.name,
-                element('td', {
-                    styles: { 'background': valueBar(ev.timing.functions.entries.length, [128,192,255], [64,64,255], 8) },
-                    textContent: ev.timing.functions.entries.length + '',
-                }),
-                element('td', {
-                    styles: { 'background': timeBar(ev.timing.total)},
-                    textContent: ev.timing.total + 'ms'
-                }),
+                this.#elm_tick = createText(tick + ''),
+                isSystem ? 'system' : 'world',
+                isBefore ? 'before' : 'after',
+                name,
+                this.#elm_status = createText('subscribed'),
+                uninspectFunction(fn, true).elm,
             ],
             datas: {
-                type: ev.isSystem ? 'system' : 'world',
-                priority: ev.isBefore ? 'before' : 'after',
-                name: ev.name
+                type     : isSystem ? 'system' : 'world',
+                priority : isBefore ? 'before' : 'after',
+                name     : name,
+                status   : 'subscribed'
+            },
+            on: {
+                click: () => detailRow.hidden = !detailRow.hidden
             }
         })
 
-        row.addEventListener('click', () => detailRow.hidden = !detailRow.hidden)
-
-        const sTable = element('table', { classes: ['row-2', 'border', 'fill-x'] })
-        const sThead = sTable.createTHead()
-        const sTbody = sTable.createTBody()
-        insertRow(sThead, undefined, [ 'function', 'delay', 'error?' ])
-
-        for (const [{fnRaw}, {delta, errorRaw}] of uninspectJSON(ev.timing.functions) as JSONInspect.Typed.From<Bedrock.Events['event']['timing']['functions']>) {
-            insertRow(sTbody, undefined, [
-                uninspectFunction(JSON.parse(fnRaw), true).elm,
-                element('td', {
-                    styles: { 'background': timeBar(delta)},
-                    textContent: delta + 'ms'
-                }),
-                errorRaw ? uninspectJSONToElement(JSON.parse(errorRaw)) : '-'
-            ])
-        }
-
-        insertRow(sTbody, undefined, [
-            '<debugger inspector>',
-            element('td', {
-                styles: { 'background': timeBar(ev.timing.self)},
-                textContent: ev.timing.self + 'ms',
-            }),
-            '-'
-        ])
-
-        const detailRow = insertRow(tbody, 1, {
+        const detailRow = this.detailRow = insertRow(EventListeners.tbody, 1, {
             classes: 'detail',
             hidden: true
         })
+
+        const detailActList = this.#elm_detail_action_list = element('div', {
+            classes: 'flex',
+            styles: { 'gap': '8px' },
+            childrens: [
+                element('button', {
+                    textContent: 'unsubscribe',
+                    on: {
+                        click: () => this.sendUnsubscribe()
+                    }
+                }),
+                this.#elm_detail_action_disable = element('button', {
+                    textContent: 'disable',
+                    on: {
+                        click: () => this[this.disabled ? 'sendEnable' : 'sendDisable']()
+                    }
+                })
+            ]
+        })
+
+        const detailLogTable = createTable({
+            classes: ['row-2', 'border', 'fill-x'],
+            thead: [[ 'tick', 'action', 'stack' ]]
+        })
+        this.#elm_detail_log_list = detailLogTable.createTBody()
 
         insertCell(detailRow, undefined, {
             colSpan: row.cells.length,
             childrens: [
                 element('div', [
-                    sTable,
+                    detailLogTable,
                     element('br'),
-                    element('div', 'data:'),
-                    element('div', {
-                        classes: 'flow-x',
-                        childrens: [uninspectJSONToElement(ev.data)]
-                    })
+                    detailActList
                 ])
             ]
         })
 
-        if (tbody.rows.length > logLimit * 2) {
-            tbody.deleteRow(-1)
-            tbody.deleteRow(-1)
-        }
+        this.listId = EventListeners.idOf(isSystem, isBefore, name, fid)
+        this.isSystem = isSystem
+        this.isBefore = isBefore
+        this.isBefore = isBefore
+        this.eventName = name
+        this.functionId = fid
+        this.functionJSON = fn
+    
+        EventListeners.list.set(this.listId, this)
+        if (EventListeners.autoflushEnable && EventListeners.list.size > EventListeners.autoflushThreshold) EventListeners.flush()
     }
 
-    // init & sse
+    readonly row: HTMLTableRowElement
+    #elm_tick
+    #elm_status
 
-    const init = fetchThrow('/session/script/event')
-        .then(async v => {
-            const text = await v.text()
-            for (const [i, d] of text.split(/\r?\n/).slice(-logLimit).entries()) {
-                if (!d) continue
-                handle(JSON.parse(d))
-                if (i % 5 === 0) await sleep(1)
-            }
-        })
-        .catch(e => console.error(e))
+    readonly detailRow: HTMLTableRowElement
+    #elm_detail_log_list
+    #elm_detail_action_list
+    #elm_detail_action_disable
 
-    bedrockEvents.addEventListener('event', async ({detail: data}) => {
-        await init
-        handle(data)
-    })
+    readonly listId: string
+    readonly objRef: string
+
+    readonly isSystem: boolean
+    readonly isBefore: boolean
+    readonly eventName: string
+
+    readonly functionId: number
+    readonly functionJSON: JSONInspect.Values.Function
+
+    #subscribed = true
+    #disabled = false
+
+    get subscribed() { return this.#subscribed }
+    set subscribed(v) {
+        if (this.#subscribed === v) return
+        this.#subscribed = v
+
+        const s = this.#subscribed ? this.#disabled ? 'disabled' : 'subscribed' : 'unsubscribed'
+        this.row.dataset.status = s
+        this.#elm_status.textContent = s
+
+        this.#elm_detail_action_list.hidden = !v
+        EventListeners.#flushCache[v ? 'delete' : 'add'](this.listId)
+    }
+
+    get disabled() { return this.#disabled }
+    set disabled(v) {
+        if (this.#disabled === v) return
+        this.#disabled = v
+
+        const s = this.#subscribed ? this.#disabled ? 'disabled' : 'subscribed' : 'unsubscribed'
+        this.row.dataset.status = s
+        this.#elm_status.textContent = s
+
+        this.#elm_detail_action_disable.textContent = v ? 'enable' : 'disable'
+    }
+
+    async sendUnsubscribe() {
+        if (!this.#subscribed) return false
+        await sendEvalThrowable(this.objRef + '.unsubscribe()')
+
+        this.subscribed = false
+        return true
+    }
+
+    async sendDisable() {
+        if (this.#disabled) return false
+        await sendEvalThrowable(this.objRef + '.disabled = true')
+
+        this.disabled = true
+        return true
+    }
+
+    async sendEnable() {
+        if (!this.#disabled) return false
+        await sendEvalThrowable(this.objRef + '.disabled = false')
+
+        this.disabled = false
+        return true
+    }
+
+    writeLog(tick: number, action: string, stack: string) {
+        insertRow(this.#elm_detail_log_list, 0, [
+            tick + '',
+            'subscribe',
+            stack
+        ])
+
+        if (this.#elm_detail_log_list.rows.length > EventListeners.logLimit) this.#elm_detail_log_list.deleteRow(-1)
+    }
 }
 
 {
-    const table = getIdThrow('event-lis-log', HTMLTableElement)
-    const tbody = table.tBodies.item(0) ?? table.createTBody()
-    const autoflushThreshold = 100
-
     const opts = getIdThrow('ev-lis-opts')
     const optsAutoclear = getIdThrow('ev-lis-autoclear', HTMLInputElement)
     const optsClear = getIdThrow('ev-lis-clear', HTMLButtonElement)
@@ -146,44 +403,7 @@ function timeBar(v: number)  {
     const optsName = getIdThrow('ev-lis-fi-name', HTMLInputElement)
     const optsNameStyle = document.head.appendChild(element('style'))
 
-    const list = new Map<string, {
-        readonly row: HTMLTableRowElement
-
-        readonly statusElm: Text
-        readonly tickElm: Text
-
-        readonly detail: {
-            readonly row: HTMLTableRowElement
-
-            readonly log: HTMLTableSectionElement
-            readonly action: HTMLDivElement
-
-            readonly act: {
-                list: HTMLDivElement
-                unsub: HTMLButtonElement
-                disable: HTMLButtonElement
-            }
-        }
-
-        status: boolean
-        disabled: boolean
-    }>()
-
-    function idOf(isSystem: boolean, isBefore: boolean, name: string, fid: number) {
-        return (isSystem ? 's' : 'w') + (isBefore ? 'b' : 'a') + '/' + name + '/' + fid.toString(36)
-    }
-
-    function flush() {
-        for (const [k, v] of list)
-            if (!v.status) {
-                list.delete(k)
-
-                v.row.remove()
-                v.detail.row.remove()
-            }
-    }
-
-    // handler
+    // inputs
 
     optsName.addEventListener('change', () => {
         const fi = optsName.value && optsName.validity.valid
@@ -200,179 +420,33 @@ function timeBar(v: number)  {
         )) return
 
         const {type, value} = elm.dataset
-        table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
+        EventListeners.table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
     })
 
-    optsClear.addEventListener('click', flush)
+    optsClear.addEventListener('click', EventListeners.flush)
 
-    function handle(ev: Bedrock.Events['event_change']) {
-        const id = idOf(ev.isSystem, ev.isBefore, ev.name, ev.fid)
-
-        const typeName = ev.isSystem ? 'system' : 'world'
-        const priorityName = ev.isBefore ? 'before' : 'after'
-        const objRef = `eventListeners.${typeName}_${priorityName}.${ev.name}.listeners.get(${ev.fid})`
-        
-        switch (ev.mode) {
-            case 'subscribe': {
-                let data = list.get(id)
-                if (!data) {
-                    let tickElm, statusElm
-                    const row = insertRow(tbody, 0, {
-                        childrens: [
-                            tickElm = createText(ev.tick + ''),
-                            typeName,
-                            priorityName,
-                            ev.name,
-                            statusElm = createText('subscribed'),
-                            uninspectFunction(ev.fn, true).elm,
-                        ],
-                        datas: {
-                            type: typeName,
-                            priority: priorityName,
-                            name: ev.name,
-                            status: 'subscribed'
-                        }
-                    })
-
-                    row.addEventListener('click', () => detailRow.hidden = !detailRow.hidden)
-    
-                    const detailRow = insertRow(tbody, 1, {
-                        classes: 'detail',
-                        hidden: true
-                    })
-        
-                    const sTable = element('table', { classes: ['row-2', 'border', 'fill-x'] })
-                    const sThead = sTable.createTHead()
-                    const sTbody = sTable.createTBody()
-                    insertRow(sThead, undefined, [ 'tick', 'action', 'stack' ])
-
-                    let detailActListElm, detailActUnsubElm, detailActDisableElm
-                    const cellCnt = element('div', [
-                        sTable,
-                        element('br'),
-                        detailActListElm = element('div', {
-                            classes: 'flex',
-                            styles: { 'gap': '8px' },
-                            childrens: [
-                                detailActUnsubElm = element('button', 'unsubscribe'),
-                                detailActDisableElm = element('button', 'disable')
-                            ]
-                        })
-                    ])
-                    insertCell(detailRow, undefined, {
-                        colSpan: row.cells.length,
-                        childrens: [cellCnt]
-                    })
-    
-                    detailActUnsubElm.addEventListener('click', () => {
-                        fetchThrow('/session/sendeval', {
-                            method: 'POST',
-                            body: `${objRef}.unsubscribe()`
-                        })
-                    }, { once: true })
-    
-                    detailActDisableElm.addEventListener('click', () => {
-                        fetchThrow('/session/sendeval', {
-                            method: 'POST',
-                            body: `${objRef}.disabled = ${row.dataset.status !== 'disabled'}`
-                        })
-                    })
-        
-                    list.set(id, data = {
-                        row,
-                        tickElm,
-                        statusElm,
-                        detail: {
-                            row: detailRow,
-                            action: detailActListElm,
-                            log: sTbody,
-                            act: {
-                                list: detailActListElm,
-                                unsub: detailActUnsubElm,
-                                disable: detailActDisableElm
-                            }
-                        },
-                        status: true,
-                        disabled: false
-                    })
-                }
-
-                const { row, statusElm, detail: { action, log, row: detailRow } } = data
-
-                row.remove()
-                detailRow.remove()
-                tbody.prepend(detailRow)
-                tbody.prepend(row)
-                
-                row.dataset.status = statusElm.textContent = 'subscribed'
-                action.hidden = false
-                insertRow(log, 0, [
-                    ev.tick + '',
-                    'subscribe',
-                    ev.stack
-                ])
-
-                data.status = true
-
-                if (optsAutoclear.checked && tbody.rows.length > autoflushThreshold * 2) flush()
-            } break
-
-            case 'unsubscribe': {
-                let data = list.get(id)
-                if (!data) return
-
-                const { row, statusElm, detail: { action, log } } = data
-
-                row.dataset.status = statusElm.textContent = 'unsubscribed'
-                action.hidden = true
-                insertRow(log, 0, [
-                    ev.tick + '',
-                    'unsubscribe',
-                    ev.stack
-                ])
-
-                data.status = false
-            } break
-
-            case 'disable': {
-                let data = list.get(id)
-                if (!data) return
-
-                const { row, statusElm, detail: { act: { disable: disableElm } } } = data
-
-                data.disabled = true
-                row.dataset.status = statusElm.textContent = 'disabled'
-                disableElm.textContent = 'enable'
-            } break
-
-            case 'enable': {
-                let data = list.get(id)
-                if (!data) return
-
-                const { row, statusElm, detail: { act: { disable: disableElm } } } = data
-
-                data.disabled = true
-                row.dataset.status = statusElm.textContent = 'enabled'
-                disableElm.textContent = 'enable'
-            } break
-        }
-    }
+    optsAutoclear.addEventListener('change', () => {
+        EventListeners.autoflushEnable = optsAutoclear.checked
+    })
 
     // init & sse
 
-    const init = fetchThrow('/session/script/event_change')
-        .then(async v => {
-            const text = await v.text()
-            for (const [i, d] of text.split(/\r?\n/).entries()) {
-                if (!d) continue
-                handle(JSON.parse(d))
-                if (i % 5 === 0) await sleep(1)
-            }
-        })
-        .catch(e => console.error(e))
+    function initRun(data: [string, NodeBedrockInterpreter.EventListenerData[]][], system: boolean, before: boolean) {
+        for (const [id, listeners] of data) {
+            for (const data of listeners) {
+                const listener = new EventListeners(system, before, id, data.fid, data.fn)
+                if (data.disabled) listener.disabled = true
+                if (!data.subscribed) listener.subscribed = false
 
-    bedrockEvents.addEventListener('event_change', async ({detail: data}) => {
-        await init
-        handle(data)
-    })
+                for (const log of data.logs) listener.writeLog(log.tick, log.mode, log.stack)
+            }
+        }
+    }
+
+    initRun(init.script.eventListeners.world.after, false, false)
+    initRun(init.script.eventListeners.world.before, false, true)
+    initRun(init.script.eventListeners.system.after, true, false)
+    initRun(init.script.eventListeners.system.before, true, true)
+
+    bedrockEvents.addEventListener('event_change', async ({detail: data}) => EventListeners.handle(data))
 }
