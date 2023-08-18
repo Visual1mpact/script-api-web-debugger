@@ -45,7 +45,7 @@ export default class BedrockInterpreter {
                         // clear
                         if (listeners.size > this.eventListenersAutoclear) {
                             for (const id of eventData.clearCache) listeners.delete(id)
-                            eventData.clearCache = new Set
+                            eventData.clearCache.clear()
                         }
                     }
 
@@ -75,7 +75,7 @@ export default class BedrockInterpreter {
                         // autoclear
                         if (runs.size > this.systemRunsAutoclear) {
                             for (const id of this.systemRunsClearCache) runs.delete(id)
-                            this.systemRunsClearCache = new Set
+                            this.systemRunsClearCache.clear()
                         }
                     }
 
@@ -92,7 +92,7 @@ export default class BedrockInterpreter {
                         world: { before: Object.create(null), after: Object.create(null) },
                         system: { before: Object.create(null), after: Object.create(null) }
                     }
-                    this.systemRuns = new Map
+                    this.systemRuns.clear()
                     this.propertyRegistry.resolve((this.propertyRegistry = new PromiseController).promise)
                 } break
             }
