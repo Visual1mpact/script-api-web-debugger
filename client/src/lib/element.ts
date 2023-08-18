@@ -30,7 +30,7 @@ export function element<T extends string>(tagName: T, opts?: ElementEditableObje
             elm.replaceChildren(...opts.childrens)
         
         if (opts.classes)
-            elm.classList.add(...( Array.isArray(opts.classes) ? opts.classes : [opts.classes] ))
+            elm.classList.add(...( typeof opts.classes !== 'string' ? opts.classes : [opts.classes] ))
         
         if (opts.styles)
             for (const [k, v] of Array.isArray(opts.styles) || opts.styles instanceof Map ? opts.styles : Object.entries(opts.styles)) elm.style.setProperty(k, v)
@@ -200,8 +200,8 @@ export type ElementEditableObject<T extends HTMLElement = HTMLElement, K extends
     >
     & {
         [x: string]: any
-        classes?: string[] | string
-        childrens?: (Node | string)[]
+        classes?: string | Iterable<string>
+        childrens?: Iterable<Node | string>
         styles?: Record<string, string>
             | Map<string, string>
             | [string, string][]
