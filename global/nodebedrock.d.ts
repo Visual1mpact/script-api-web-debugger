@@ -10,31 +10,30 @@ declare namespace NodeBedrockInterpreter {
         script: {
             consoleLog: Bedrock.Events['console'][],
             eventLog: Bedrock.Events['event'][],
-            eventListeners: EventListeners,
-            systemRuns: SystemRuns,
+            eventListeners: EventListenerLists<[string, EventListenerData[]][]>,
+            systemRuns: SystemRunData[],
             propertyRegistry: Bedrock.Events['property_registry'],
         }
     }
 
-    type EventListeners = Record<'world' | 'system',
-        Record<'before' | 'after',
-            Record<string, {
-                clearCache: number[]
-                list: Map<number, {
-                    fn: JSONInspect.Values.Function
-                    status: 'disable' | 'subscribe' | 'unsubscribe'
-                    logs: {
-                        tick: number
-                        mode: Bedrock.Events['event_change']['mode']
-                        stack: string
-                    }[]
-                }>
-            }>
-        >
-    >
+    interface EventListenerData {
+        readonly fid: number
+        readonly fn: JSONInspect.Values.Function
 
-    type SystemRuns = Map<number, {
+        readonly logs: {
+            readonly tick: number
+            readonly mode: Bedrock.Events['event_change']['mode']
+            readonly stack: string
+        }[]
+
+        status: 'disable' | 'subscribe' | 'unsubscribe'
+    }
+
+    type EventListenerLists<T> = Record<'world' | 'system', Record<'before' | 'after', T>>
+
+    interface SystemRunData {
         readonly tick: number
+        readonly id: number
 
         readonly type: Bedrock.T_RunType
         readonly duration: number
@@ -44,5 +43,5 @@ declare namespace NodeBedrockInterpreter {
 
         status: 'add' | 'suspend' | 'clear'
         clearStack?: string
-    }>
+    }
 }

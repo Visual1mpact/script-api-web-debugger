@@ -36,8 +36,17 @@ server.get('/data', async (req, res) => {
         script: {
             consoleLog,
             eventLog,
-            eventListeners,
-            systemRuns,
+            eventListeners: {
+                world: {
+                    after: Array.from(eventListeners.world.after, ([k, v]) => [k, Array.from(v.list.values())]),
+                    before: Array.from(eventListeners.world.before, ([k, v]) => [k, Array.from(v.list.values())]),
+                },
+                system: {
+                    after: Array.from(eventListeners.system.after, ([k, v]) => [k, Array.from(v.list.values())]),
+                    before: Array.from(eventListeners.system.before, ([k, v]) => [k, Array.from(v.list.values())]),
+                }
+            },
+            systemRuns: Array.from(systemRuns.values()),
             propertyRegistry: await propertyRegistry.promise,
         }
     }

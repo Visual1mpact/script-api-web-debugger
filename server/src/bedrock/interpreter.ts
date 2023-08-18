@@ -27,16 +27,20 @@ export default class BedrockInterpreter {
                     const { isBefore, isSystem, fid, fn, mode, stack, name, tick } = ev.data
 
                     // get event data & listeners
-                    const eventData = this.eventListeners[isSystem ? 'system' : 'world'][isBefore ? 'before' : 'after'][name] ??= {
+                    const events = this.eventListeners[isSystem ? 'system' : 'world'][isBefore ? 'before' : 'after']
+
+                    let eventData = events.get(name)
+                    if (!eventData) events.set(name, eventData = {
                         clearCache: [],
                         list: new Map
-                    }
+                    })
+
                     const listeners = eventData.list
 
                     // get data
                     let data = listeners.get(fid)
                     if (!data) {
-                        listeners.set(fid, data = { fn, logs: [], status: 'subscribe' })
+                        listeners.set(fid, data = { fid, fn, logs: [], status: 'subscribe' })
 
                         // clear
                         if (listeners.size > this.eventListenersAutoclear) {
@@ -65,7 +69,7 @@ export default class BedrockInterpreter {
                     // get data
                     let data = runs.get(id)
                     if (!data) {
-                        runs.set(id, data = { duration, fn, stack, tick, type, status: 'add' })
+                        runs.set(id, data = { id, duration, fn, stack, tick, type, status: 'add' })
 
                         // autoclear
                         if (runs.size > this.systemRunsAutoclear) {
@@ -107,7 +111,12 @@ export default class BedrockInterpreter {
 
     eventListenersLogLimit = 30
     eventListenersAutoclear = 10
-    eventListeners: NodeBedrockInterpreter.EventListeners = {
+    eventListeners: NodeBedrockInterpreter.EventListenerLists<
+        Map<string, {
+            clearCache: number[],
+            list: Map<number, NodeBedrockInterpreter.EventListenerData>
+        }>
+    > = {
         world: { before: Object.create(null), after: Object.create(null) },
         system: { before: Object.create(null), after: Object.create(null) }
     }
@@ -115,7 +124,7 @@ export default class BedrockInterpreter {
     systemRunsLimit = 30
     systemRunsAutoclear = 100
     systemRunsClearCache: number[] = []
-    systemRuns: NodeBedrockInterpreter.SystemRuns = new Map
+    systemRuns: Map<number, NodeBedrockInterpreter.SystemRunData> = new Map
 
     propertyRegistry = new PromiseController<Bedrock.Events['property_registry']>
 
