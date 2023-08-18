@@ -40,7 +40,7 @@ export default class BedrockInterpreter {
                     // get data
                     let data = listeners.get(fid)
                     if (!data) {
-                        listeners.set(fid, data = { fid, fn, logs: [], status: 'subscribe' })
+                        listeners.set(fid, data = { fid, fn, logs: [], disabled: false, subscribed: true })
 
                         // clear
                         if (listeners.size > this.eventListenersAutoclear) {
@@ -49,14 +49,19 @@ export default class BedrockInterpreter {
                         }
                     }
 
-                    // update status & logs
-                    data.status = mode === 'enable' ? 'subscribe' : mode
                     data.logs.push({ tick, mode, stack })
                     if (data.logs.length > this.eventListenersLogLimit) data.logs.shift()
 
-                    // add / clear cache
-                    if (mode === 'unsubscribe') eventData.clearCache.add(fid)
-                    if (mode === 'subscribe') eventData.clearCache.delete(fid)
+                    if (mode === 'disable') data.disabled = true
+                    if (mode === 'enable') data.disabled = false
+                    if (mode === 'subscribe') {
+                        data.subscribed = true
+                        eventData.clearCache.delete(fid)
+                    }
+                    if (mode === 'unsubscribe') {
+                        data.subscribed = false
+                        eventData.clearCache.add(fid)
+                    }
                 } break
 
                 case 'property_registry': {

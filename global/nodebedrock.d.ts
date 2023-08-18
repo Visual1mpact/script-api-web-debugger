@@ -26,7 +26,8 @@ declare namespace NodeBedrockInterpreter {
             readonly stack: string
         }[]
 
-        status: 'disable' | 'subscribe' | 'unsubscribe'
+        disabled: boolean
+        subscribed: boolean
     }
 
     type EventListenerLists<T> = Record<'world' | 'system', Record<'before' | 'after', T>>
