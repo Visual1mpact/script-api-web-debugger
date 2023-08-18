@@ -1,4 +1,4 @@
-import { fetchThrow } from "./lib/misc";
+import { fetchThrow } from "./lib/misc.js";
 
 export async function sendEval(script: string) {
     const res = await fetchThrow('/session/eval', {
