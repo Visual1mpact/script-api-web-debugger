@@ -20,9 +20,11 @@ export class EventLogList {
         const { name, isBefore, isSystem, tick, timing: { functions, self, total } } = ev
         const data = new this(name, isSystem, isBefore, tick)
 
-        data.setData(ev.data)
         data.setTiming([], functions.length, self, total)
-        data.row.addEventListener('click', () => data.setTiming(functions, functions.length, self, total), { once: true })
+        data.row.addEventListener('click', () => {
+            data.setData(ev.data)
+            data.setTiming(functions, functions.length, self, total), { once: true }
+        })
         return data
     }
 
