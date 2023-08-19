@@ -513,17 +513,30 @@ export class RunLogList {
             && this.#filterId.test(ids)
     }
 
-    constructor(tick = 0, timing?: Iterable<LogType>) {
+    constructor(tick = 0, count = 0, delay = 0, ids: number[] = []) {
         this.row = insertRow(RunLogList.list, 0, {
             childrens: [
                 this.#elm_tick = createText(tick + ''),
-                this.#elm_runs_bar = element('td'),
-                this.#elm_timing_bar = element('td')
+                this.#elm_runs_bar = element('td', {
+                    styles: { background: valueBar(count, [128,192,255], [64,64,255], 8) },
+                    textContent: count + ''
+                }),
+                this.#elm_timing_bar = element('td', {
+                    styles: { background: timeBar(delay) },
+                    textContent: delay + 'ms'
+                })
             ],
+            datas: {
+                time: delay + '',
+                count: count + '',
+                ids: ids.join(' ')
+            },
             on: {
                 click: () => detailRow.hidden = !detailRow.hidden
             }
         })
+
+        this.row.hidden = !RunLogList.#testFilter(this.row.dataset)
 
         const sTable = createTable({
             classes: ['row-2', 'border', 'fill-x'],
@@ -541,8 +554,6 @@ export class RunLogList {
                 })
             ]
         })
-
-        if (timing) this.setTiming(timing)
 
         if (RunLogList.list.rows.length > RunLogList.logLimit * 2) {
             RunLogList.list.deleteRow(-1)
@@ -611,11 +622,7 @@ export class RunLogList {
     const optsMinDelay = getIdThrow('rtime-o-mindelay', HTMLInputElement)
     const optsMinCount = getIdThrow('rtime-o-mincount', HTMLInputElement)
     const optsFilterIds = getIdThrow('rtime-o-filterids', HTMLInputElement)
-
     const optsPause = getIdThrow('rtime-o-pause', HTMLButtonElement)
-
-    let fns: Bedrock.Events['system_run'][] = []
-    let stall: [number, LogType[]][] = []
 
     // inputs
 
@@ -635,22 +642,36 @@ export class RunLogList {
 
     // sse & async renderer
 
+    let fns: LogType[] = [], ids: number[] = [], delayTotal = 0
+    let stall: [tick: number, fns: LogType[], ids: number[], delayTotal: number][] = []
+
     bedrockEvents.addEventListener('system_run', ({ detail: data }) => {
-        if (!rtimePaused) fns.push(data)
+        if (rtimePaused) return
+
+        fns.push({
+            fn: data.fn,
+            id: data.id,
+            error: data.error,
+            time: data.delta
+        })
+        ids.push(data.id)
+        delayTotal += data.delta
     })
 
     bedrockEvents.addEventListener('tick', ({ detail: data }) => {
         if (rtimePaused) return
 
-        stall.push([
-            data.tick,
-            fns.map( ({ id, delta, fn, error }) => ({ fn, id, time: delta, error }) )
-        ])
+        stall.push([ data.tick, fns, ids, delayTotal ])
         fns = []
+        ids = []
+        delayTotal = 0
     })
 
     setInterval(() => {
-        for (const [tick, timing] of stall) new RunLogList(tick, timing)
+        for (const [tick, timing, ids, delay] of stall) {
+            const log = new RunLogList(tick, ids.length, delay, ids)
+            log.row.addEventListener('click', () => log.setTiming(timing), { once: true })
+        }
         stall = []
     }, 200)
 }

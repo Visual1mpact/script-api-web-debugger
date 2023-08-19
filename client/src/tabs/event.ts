@@ -19,7 +19,7 @@ export class EventLogList {
     static handle(ev: Bedrock.Events['event']) {
         const data = new this(ev.name, ev.isSystem, ev.isBefore, ev.tick)
         data.setData(ev.data)
-        data.setTiming(ev.timing.functions, ev.timing.self, ev.timing.total)
+        data.row.addEventListener('click', () => data.setTiming(ev.timing.functions, ev.timing.self, ev.timing.total), { once: true })
         return data
     }
 
