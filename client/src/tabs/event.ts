@@ -285,15 +285,11 @@ export class EventListeners {
             childrens: [
                 element('button', {
                     textContent: 'unsubscribe',
-                    on: {
-                        click: () => this.sendUnsubscribe()
-                    }
+                    on: { click: () => this.sendUnsubscribe() }
                 }),
                 this.#elm_detail_action_disable = element('button', {
                     textContent: 'disable',
-                    on: {
-                        click: () => this[this.disabled ? 'sendEnable' : 'sendDisable']()
-                    }
+                    on: { click: () => this.sendDisable() }
                 })
             ]
         })
@@ -382,19 +378,11 @@ export class EventListeners {
         return true
     }
 
-    async sendDisable() {
-        if (this.#disabled) return false
-        await sendEvalThrowable(this.objRef + '.disabled = true')
+    async sendDisable(disabled = !this.#disabled) {
+        if (disabled === this.#disabled) return false
+        await sendEvalThrowable(this.objRef + '.disabled = ' + disabled)
 
-        this.disabled = true
-        return true
-    }
-
-    async sendEnable() {
-        if (!this.#disabled) return false
-        await sendEvalThrowable(this.objRef + '.disabled = false')
-
-        this.disabled = false
+        this.disabled = disabled
         return true
     }
 
