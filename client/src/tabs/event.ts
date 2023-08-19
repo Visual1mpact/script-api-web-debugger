@@ -197,7 +197,14 @@ export class EventListeners {
     static logLimit = 30
 
     static flush() {
-        for (const id of this.#flushCache) EventListeners.list.delete(id)
+        for (const id of this.#flushCache) {
+            const d = EventListeners.list.get(id)
+            if (!d) continue
+
+            d.row.remove()
+            d.detailRow.remove()
+            EventListeners.list.delete(id)
+        }
         this.#flushCache.clear()
     }
 
@@ -427,7 +434,7 @@ export class EventListeners {
         EventListeners.table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
     })
 
-    optsClear.addEventListener('click', EventListeners.flush)
+    optsClear.addEventListener('click', () => EventListeners.flush())
 
     optsAutoclear.addEventListener('change', () => {
         EventListeners.autoflushEnable = optsAutoclear.checked
