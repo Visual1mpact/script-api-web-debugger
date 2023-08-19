@@ -371,20 +371,9 @@
                         <h3>world properties</h3>
                         <span>estimated size: <span id="properties-world-est">---</span> bytes</span>
                     </div>
-                    <div class="flow-y">
-                        <table class="row-2 fill-x border" id="properties-world-list">
-                            <thead>
-                                <tr>
-                                    <td>property</td>
-                                    <td>type</td>
-                                    <td>default</td>
-                                    <td>value</td>
-                                </tr>
-                            </thead>
-                            <tbody class="code"></tbody>
-                        </table>
-                    </div>
+                    <div class="flow-y" id="properties-world-list-cnt"></div>
                 </div>
+
                 <div id="properties-addtrack" class="flex" style="gap: 8px">
                     <select id="p-addtrack-type">
                         <option value="player">player name</option>
@@ -395,6 +384,7 @@
 
                     <button id="p-addtrack-track">watch</button>
                 </div>
+                
                 <div id="properties-tracklist" class="flow-y"></div>
             </div>
 

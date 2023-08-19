@@ -1,7 +1,9 @@
-import { element, insertRow } from "../lib/element.js";
+import init from "../init.js";
+import { createTable, element, insertRow } from "../lib/element.js";
 import { uninspectJSON } from "../lib/json_uninspector.js";
-import { fetchThrow, getIdThrow } from "../lib/misc.js";
+import { getIdThrow } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
+import { sendEvalThrowable } from "../util.js";
 
 function elementValue(v: string | number | boolean | undefined) {
     switch (typeof v) {
@@ -31,77 +33,71 @@ function elementValue(v: string | number | boolean | undefined) {
     }
 }
 
-const init = fetchThrow('/session/script/property_registry')
-    .then(async v => await v.json() as Bedrock.Events['property_registry'])
+class PropertiesTable {
+    constructor(properties?: RecordOrIterable<string, Bedrock.T_DynamicPropertyData>, entityId?: string) {
+        this.table = createTable({
+            classes: ['row-2', 'fill-x', 'border'],
+            styles: { 'grid-area': 't' },
 
-// world
-{
-    const list: Record<string, PropertyData> = Object.create(null)
-
-    const table = getIdThrow('properties-world-list', HTMLTableElement)
-    const tbody = table.tBodies.item(0) ?? table.createTBody()
-
-    const est = getIdThrow('properties-world-est')
-    let estValue = 0
-
-    // init & sse
-
-    const worldInit = Promise.all([
-        fetchThrow('/session/sendeval', {
-            method: 'POST',
-            body: 'this.dynamicProperties.getAllWorld()'
-        }),
-        init
-    ])
-        .then(async ([ev, init]) => {
-            for (const [key, type] of init.world) {
-                let value
-                const row = insertRow(tbody, undefined, [
-                    key,
-                    type.type,
-                    elementValue(type.default),
-                    value = element('span', '...')
-                ])
-    
-                list[key] = {
-                    row,
-                    defaultValue: type.default,
-                    value
-                }
-    
-                let valueSize = type.type === 'string' ? 2 + type.maxLength
-                    : type.type === 'number' ? 5
-                    : 2
-    
-                estValue += valueSize + key.length
-            }
-    
-            est.textContent = estValue.toString()
-    
-            const { result, error } = await ev.json()
-            const data = uninspectJSON(result) as Record<string, DynamicPropertyValue>
-            if (error) throw data
-    
-            for (const [key, value] of Object.entries(data)) {
-                const prop = list[key]
-                if (!prop) continue
-    
-                prop.value.replaceChildren(elementValue(value))
+            thead: [[ 'property', 'type', 'default', 'value' ]],
+            tbody: {
+                classes: 'code'
             }
         })
-        .catch(e => console.error(e))
-        
-    bedrockEvents.addEventListener('property_set', async ({ detail: data }) => {
-        if (data.type !== 'world') return
+        this.tbody = this.table.tBodies.item(-1) ?? this.table.createTBody()
 
-        const { value, property } = data
+        if (properties) 
+            for (const [key, data] of properties[Symbol.iterator]?.() ?? Object.entries(properties))
+                this.register(key, data)
 
-        const prop = list[property]
+        this.entityId = entityId
+    }
+
+    readonly table: HTMLTableElement
+    readonly tbody: HTMLTableSectionElement
+
+    #estSize = 0
+    #properties: Record<string, {
+        readonly default: HTMLElement
+        readonly row: HTMLTableRowElement
+        readonly valueCell: HTMLTableCellElement
+    }> = Object.create(null)
+
+    entityId?: string
+
+    get estimatedSize() { return this.#estSize }
+
+    register(key: string, data: Bedrock.T_DynamicPropertyData) {
+        const { type, 'default': defaultValue } = data
+
+        let elmValue
+        const row = insertRow(this.tbody, undefined, [
+            key,
+            type,
+            elementValue(defaultValue),
+            elmValue = element('td')
+        ])
+
+        this.#properties[key] = {
+            default: elementValue(defaultValue),
+            row,
+            valueCell: elmValue
+        }
+
+        this.#estSize += key.length + (
+            type === 'string' ? 2 + data.maxLength
+            : type === 'number' ? 5
+            : 2
+        )
+
+        return this
+    }
+
+    set(key: string, value: DynamicPropertyValue) {
+        const prop = this.#properties[key]
         if (!prop) return
-    
-        await worldInit
 
-        prop.value.replaceChildren(elementValue(value))
+        prop.valueCell.replaceChildren(value === undefined ? prop.default : elementValue(value))
         prop.row.animate([
             { background: `rgba(64, 64, 255, 0.2)` },
             { background: `rgba(64, 64, 255, 0)` },
@@ -109,19 +105,34 @@ const init = fetchThrow('/session/script/property_registry')
             duration: 500,
             composite: 'add'
         })
+    }
+}
+
+// world
+{
+    const wtable = new PropertiesTable(init.script.propertyRegistry.world)
+
+    getIdThrow('properties-world-list-cnt').appendChild(wtable.table)
+    getIdThrow('properties-world-est').replaceChildren(String(wtable.estimatedSize))
+
+    bedrockEvents.addEventListener('property_set', async ({ detail: data }) => {
+        if (data.type !== 'world') return
+
+        wtable.set(data.property, data.value)
     })
 }
 
 // entity
 {
-    const trackElm = getIdThrow('properties-tracklist')
+    const entityProperties = new Map(init.script.propertyRegistry.entities)
 
+    const trackElm = getIdThrow('properties-tracklist')
     const trackList: Record<string, {
         readonly elm: HTMLElement
-        readonly properties: Record<string, PropertyData>
+        readonly table: PropertiesTable
     }> = Object.create(null)
 
-    // handler
+    // inputs
 
     const track = {
         type: getIdThrow('p-addtrack-type', HTMLSelectElement),
@@ -131,126 +142,67 @@ const init = fetchThrow('/session/script/property_registry')
 
     track.track.addEventListener('click', async () => {
         const value = track.value.value
-        const type = track.type.value
+        const addtype = track.type.value
 
         if (!value) return track.value.focus()
 
-        const res = await fetchThrow('/session/sendeval', {
-            method: 'POST',
-            body: `
-                const ent = ${type === 'player' ? '$player' : '$id'}(${JSON.stringify(value)});
-                ({
-                    id: ent.id,
-                    type: ent.typeId,
-                    props: dynamicProperties.getAllEntity(ent)
-                })
-            `
-        })
-        const { result, error } = await res.json()
-        const data = uninspectJSON(result) as { id: string, type: string, props: Record<string, DynamicPropertyValue> }
-        if (error) throw data
+        const res = await sendEvalThrowable(`
+            const ent = ${addtype === 'player' ? '$player' : '$id'}(${JSON.stringify(value)});
+            ({
+                id: ent.id,
+                type: ent.typeId,
+                props: dynamicProperties.getAllEntity(ent)
+            })
+        `)
+        const { id, type, props } = uninspectJSON(res.result) as { id: string, type: string, props: Record<string, DynamicPropertyValue> }
 
-        let estValue = 0
+        const etable = new PropertiesTable(undefined, id)
+        for (const [k, v] of entityProperties.get(type) ?? []) etable.register(k, v).set(k, props[k])
 
-        const table = element('table', {
-            classes: ['row-2', 'fill-x', 'border'],
-            styles: { 'grid-area': 't' }
-        })
-        const thead = table.createTHead()
-        const tbody = table.createTBody()
-        insertRow(thead, undefined, ['property', 'type', 'default', 'value'])
-
-        const plist: Record<string, PropertyData> = Object.create(null)
-
-        const list = (await entityInit).get(data.type) ?? []
-        for (const [key, type] of list) {
-            let value
-            const row = insertRow(tbody, undefined, [
-                key,
-                type.type,
-                elementValue(type.default),
-                value = element('span', '...')
-            ])
-
-            plist[key] = {
-                row,
-                defaultValue: type.default,
-                value
-            }
-
-            let valueSize = type.type === 'string' ? 2 + type.maxLength
-                : type.type === 'number' ? 5
-                : 2
-
-            estValue += valueSize + key.length
-        }
-
-        for (const [key, value] of Object.entries(data.props)) {
-            const prop = plist[key]
-            if (!prop) continue
-
-            prop.value.replaceChildren(elementValue(value))
-        }
-
-        let stopBtn
         const cnt = element('div', {
             classes: 'flex-col',
             childrens: [
                 element('div', {
                     childrens: [
-                        element('h3', `${data.id} (${data.type})`),
+                        element('h3', `${id} (${type})`),
                         ' ',
-                        element('span', `estimated size: ${estValue} bytes`),
+                        element('span', `estimated size: ${etable.estimatedSize} bytes`),
                     ],
                     styles: { 'grid-area': 'i' }
                 }),
-                stopBtn = element('button', {
+                element('button', {
                     textContent: 'stop',
-                    styles: { 'grid-area': 's' }
+                    styles: { 'grid-area': 's' },
+                    on: {
+                        click: {
+                            listener() {
+                                cnt.remove()
+                                delete trackList[id]
+                            },
+                            options: {
+                                once: true
+                            }
+                        }
+                    }
                 }),
-                table
+                etable.table
             ]
         })
 
-        stopBtn.addEventListener('click', () => {
-            cnt.remove()
-            delete trackList[data.id]
-        }, { once: true })
-
-        trackList[data.id] = {
+        trackList[id] = {
             elm: cnt,
-            properties: plist
+            table: etable
         }
         trackElm.append(cnt)
     })
 
     // init & sse
-        
-    const entityInit = init.then(v => new Map(v.entities))
-        
+
     bedrockEvents.addEventListener('property_set', async ({ detail: data }) => {
         if (data.type !== 'entity') return
 
-        const { value, property } = data
-
-        const prop = trackList[data.entityId]?.properties[property]
-        if (!prop) return
-
-        prop.value.replaceChildren(elementValue(value))
-        prop.row.animate([
-            { background: `rgba(64, 64, 255, 0.2)` },
-            { background: `rgba(64, 64, 255, 0)` },
-        ], {
-            duration: 500,
-            composite: 'add'
-        })
+        trackList[data.entityId]?.table.set(data.property, data.value)
     })
-}
-
-interface PropertyData {
-    readonly defaultValue: DynamicPropertyValue
-    readonly value: HTMLSpanElement
-    readonly row: HTMLTableRowElement
 }
 
 type DynamicPropertyValue = string | number | boolean | undefined
