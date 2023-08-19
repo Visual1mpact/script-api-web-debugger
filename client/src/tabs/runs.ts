@@ -464,7 +464,7 @@ function handleRunChange(ev: Bedrock.Events['system_run_change']) {
                 elm_maxTim.textContent = maxDelay + 'ms'
                 elm_maxTim.style.background = timeBar(maxDelay)
 
-                if (data instanceof RunIntervalList) data.chart.update()
+                if (data instanceof RunIntervalList && !data.detailRow.hidden) data.chart.update()
             }
 
             // footer
