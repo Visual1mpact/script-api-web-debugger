@@ -77,8 +77,11 @@ async function sendInput(value: string) {
 
 // inputs
 
-input.addEventListener('keypress', ({ charCode, ctrlKey }) => {
+input.addEventListener('keypress', ev => {
+    const { charCode, ctrlKey } = ev
     if (charCode !== 13 || !input.value || !ctrlKey) return
+    
+    ev.preventDefault()
     sendInput(input.value)
 })
 
