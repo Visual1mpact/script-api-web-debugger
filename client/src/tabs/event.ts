@@ -10,7 +10,7 @@ function timeBar(v: number)  {
     return valueBar(v, [255, 255, 64], [255, 64, 64], 50)
 }
 
-class EventLogList {
+export class EventLogList {
     static readonly table = getIdThrow('event-log', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 
@@ -185,7 +185,7 @@ class EventLogList {
     bedrockEvents.addEventListener('event', async ({detail: data}) => EventLogList.handle(data))
 }
 
-class EventListeners {
+export class EventListeners {
     static readonly table = getIdThrow('event-lis-log', HTMLTableElement)
     static readonly tbody = this.table.tBodies.item(0) ?? this.table.createTBody()
 

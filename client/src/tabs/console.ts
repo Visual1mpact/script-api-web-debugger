@@ -4,7 +4,7 @@ import { getIdThrow } from "../lib/misc.js";
 import init from "../init.js";
 import { bedrockEvents } from "../sse.js";
 
-class ConsoleList {
+export class ConsoleList {
     static readonly table = getIdThrow('console-list', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 

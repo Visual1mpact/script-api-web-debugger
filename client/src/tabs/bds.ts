@@ -3,7 +3,7 @@ import { createText, element, insertRow } from "../lib/element.js";
 import { fetchThrow, getIdThrow } from "../lib/misc.js";
 import { sseEvents } from "../sse.js";
 
-class BDSList {
+export class BDSList {
     static readonly table = getIdThrow('bds-log-list', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 

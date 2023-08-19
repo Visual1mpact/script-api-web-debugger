@@ -33,7 +33,7 @@ function elementValue(v: string | number | boolean | undefined) {
     }
 }
 
-class PropertiesTable {
+export class PropertiesTable {
     constructor(properties?: RecordOrIterable<string, Bedrock.T_DynamicPropertyData>, entityId?: string) {
         this.table = createTable({
             classes: ['row-2', 'fill-x', 'border', 'properties-table'],
