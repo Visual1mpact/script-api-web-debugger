@@ -57,6 +57,15 @@ export class ConsoleList {
         this.#elm_data.replaceChildren(...datas.map(v => v.type === 'string' ? element('span', v.value) : uninspectJSONToElement(v)))
         return this
     }
+
+    get isListed() { return Boolean(this.row.parentElement) }
+    unlist() {
+        if (!this.isListed) return false
+
+        this.row.remove()
+
+        return true
+    }
 }
 
 // inputs

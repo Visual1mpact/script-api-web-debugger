@@ -151,6 +151,16 @@ export class EventLogList {
 
         return this
     }
+
+    get isListed() { return Boolean(this.row.parentElement && this.detailRow.parentElement) }
+    unlist() {
+        if (!this.isListed) return false
+
+        this.row.remove()
+        this.detailRow.remove()
+
+        return true
+    }
 }
 
 {
@@ -197,14 +207,7 @@ export class EventListeners {
     static logLimit = 30
 
     static flush() {
-        for (const id of this.#flushCache) {
-            const d = EventListeners.list.get(id)
-            if (!d) continue
-
-            d.row.remove()
-            d.detailRow.remove()
-            EventListeners.list.delete(id)
-        }
+        for (const id of this.#flushCache) EventListeners.list.get(id)?.unlist()
         this.#flushCache.clear()
     }
 
@@ -403,6 +406,17 @@ export class EventListeners {
         ])
 
         if (this.#elm_detail_log_list.rows.length > EventListeners.logLimit) this.#elm_detail_log_list.deleteRow(-1)
+    }
+
+    get isListed() { return EventListeners.list.has(this.listId) }
+    unlist() {
+        if (!this.isListed) return false
+
+        EventListeners.list.delete(this.listId)
+        this.row.remove()
+        this.detailRow.remove()
+
+        return true
     }
 }
 

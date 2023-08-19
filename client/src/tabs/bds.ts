@@ -51,6 +51,15 @@ export class BDSList {
 
     get message() { return this.#elm_message.textContent }
     set message(v) { this.#elm_message.textContent = v }
+
+    get isListed() { return Boolean(this.row.parentElement) }
+    unlist() {
+        if (!this.isListed) return false
+
+        this.row.remove()
+
+        return true
+    }
 }
 
 // inputs
