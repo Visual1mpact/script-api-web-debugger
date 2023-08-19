@@ -28,3 +28,30 @@
     grid-template-columns: 1fr auto;
     gap: 8px;
 }
+
+#tab-properties .properties-table > * > tr > td:is(:nth-child(1), :nth-child(2), :nth-child(5)) {
+    width: 0px;
+    min-width: min-content;
+}
+
+.properties-opts > div {
+    opacity: 0;
+
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+}
+
+.properties-opts > div:hover {
+    opacity: 1;
+}
+
+.properties-opts > div > * {
+    opacity: 0.4;
+    height: 1em;
+}
+
+.properties-opts > div > *:hover {
+    opacity: 1;
+    cursor: pointer;
+}
