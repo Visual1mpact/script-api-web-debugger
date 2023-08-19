@@ -88,6 +88,11 @@
 
 6. Open the browser by pressing `Ctrl+O` in the node process or by opening `localhost:7070`.
 
+### Notes
+
+- It is recommended to disable script watchdog, as the debugger adds little to alot amount of overheads depending on the pack's intensity and may cause unwanted.
+- Using this may cause high CPU usage on all processes (Bedrock, Node, and the browser).
+
 ## Commands
 
 ### pack.bat
