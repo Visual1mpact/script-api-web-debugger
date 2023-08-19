@@ -22,7 +22,7 @@ server.get('/', (req, res) => res.redirect('/app'))
 server.use('/app', express.static('../client/app', { index: 'main.html' }))
 
 server.get('/data', async (req, res) => {
-    const { bdsConsoleLog, consoleLog, eventLog, eventListeners, systemRuns, propertyRegistry } = bedrockInterpreter
+    const { bdsConsoleLog, consoleLog, eventLog, eventListeners, systemRuns, propertyRegistry, worldProperties } = bedrockInterpreter
     const { pid = -1, killed, exitCode, signalCode } = bedrock.process
 
     const data: NodeBedrockInterpreter.GetData = {
@@ -48,6 +48,7 @@ server.get('/data', async (req, res) => {
             },
             systemRuns: Array.from(systemRuns.values()),
             propertyRegistry: await propertyRegistry.promise,
+            worldProperties
         }
     }
 

@@ -65,6 +65,7 @@ export default class BedrockInterpreter {
                 } break
 
                 case 'property_registry': {
+                    this.worldProperties = {...ev.data.worldInitProperties}
                     this.propertyRegistry.resolve(ev.data)
                 } break
 
@@ -99,7 +100,15 @@ export default class BedrockInterpreter {
                     }
                     this.systemRuns.clear()
                     this.propertyRegistry.resolve((this.propertyRegistry = new PromiseController).promise)
+                    this.worldProperties = Object.create(null)
                 } break
+
+                case 'property_set': {
+                    if (ev.data.type !== 'world') return
+                    const { property, value } = ev.data
+
+                    this.worldProperties[property] = value
+                }
             }
         })
     }
@@ -132,6 +141,7 @@ export default class BedrockInterpreter {
     systemRuns: Map<number, NodeBedrockInterpreter.SystemRunData> = new Map
 
     propertyRegistry = new PromiseController<Bedrock.Events['property_registry']>
+    worldProperties: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
 
     sendEval(script: string) {
         const id = crypto.randomBytes(8).toString('hex')

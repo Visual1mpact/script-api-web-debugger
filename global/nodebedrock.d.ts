@@ -8,11 +8,12 @@ declare namespace NodeBedrockInterpreter {
         consoleLog: Bedrock.ProcessEvents['line'][]
 
         script: {
-            consoleLog: Bedrock.Events['console'][],
-            eventLog: Bedrock.Events['event'][],
-            eventListeners: EventListenerLists<[string, EventListenerData[]][]>,
-            systemRuns: SystemRunData[],
-            propertyRegistry: Bedrock.Events['property_registry'],
+            consoleLog: Bedrock.Events['console'][]
+            eventLog: Bedrock.Events['event'][]
+            eventListeners: EventListenerLists<[string, EventListenerData[]][]>
+            systemRuns: SystemRunData[]
+            propertyRegistry: Bedrock.Events['property_registry']
+            worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
         }
     }
 
