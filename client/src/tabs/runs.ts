@@ -1,362 +1,406 @@
-import { ChartDataset } from "chart.js";
-import { createText, element, insertCell, insertRow } from "../lib/element.js";
+import { createTable, createText, element, insertCell, insertRow } from "../lib/element.js";
 import { uninspectFunction, uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
-import { fetchThrow, getIdThrow, insertAt, sleep } from "../lib/misc.js";
+import { getIdThrow, iterateLength } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
 import { stableAverage, valueBar as valueBar } from "../lib/misc2.js";
+import { sendEvalThrowable } from "../util.js";
+import init from "../init.js";
+import { ChartDataset } from "chart.js";
 
 function timeBar(v: number)  {
     return valueBar(v, [255, 255, 64], [255, 64, 64], 50)
 }
 
-{
-    const table = getIdThrow('run-list', HTMLTableElement)
-    const tbody = table.tBodies.item(0) ?? table.createTBody()
-    const autoflushThreshold = 200
+export abstract class RunList {
+    static readonly table = getIdThrow('run-list', HTMLTableElement)
+    static readonly tbody = this.table.tBodies.item(0) ?? this.table.createTBody()
 
+    static readonly list = new Map<number, RunList>()
+
+    static autoflushThreshold = 200
+    static autoflushEnable = true
+    static #flushCache = new Set<number>()
+
+    static pulse = false
+
+    static flush() {
+        for (const id of this.#flushCache) this.list.get(id)?.unlist()
+        this.#flushCache.clear()
+    }
+
+    static handleRun(ev: Bedrock.Events['system_run']) {
+        this.list.get(ev.id)?.tick(ev.tick, ev.delta, ev.error)
+    }
+
+    constructor(id: number, type: RunType, duration: number, fn: JSONInspect.Values.Function, addStack = '') {
+        this.id = id
+        this.type = type
+        this.duration = duration
+        this.fuctionJSON = fn
+
+        const row = this.row = insertRow(RunList.tbody, 0, {
+            childrens: [
+                type,
+                this.#elm_status = createText('active'),
+                duration + '',
+                id + '',
+                uninspectFunction(fn, true).elm,
+                this.elm_avgTime = element('td', '---'),
+                this.elm_maxTim = element('td', '---')
+            ],
+            datas: {
+                type:  type,
+                status: 'active',
+                exec: 'unexecuted'
+            },
+            on: {
+                click: () => detailRow.hidden = !detailRow.hidden
+            }
+        })
+
+        const detailRow = this.detailRow = insertRow(RunList.tbody, 1, {
+            classes: 'detail',
+            hidden: true
+        })
+
+        const cellCnt = this.detailCnt = element('div', [
+            element('div', {
+                styles: { 'grid-area': 'add' },
+                childrens: [
+                    element('div', 'add stack'),
+                    this.#elm_detail_addstack = createText(addStack)
+                ]
+            }),
+            element('div', {
+                styles: { 'grid-area': 'clear' },
+                childrens: [
+                    element('div', 'clear stack'),
+                    this.#elm_detail_clearstack = createText('-')
+                ]
+            }),
+            this.#elm_detail_act_list = element('div', {
+                classes: 'flex',
+                styles: {
+                    'grid-area': 'act',
+                    'gap': '8px'
+                },
+                childrens: [
+                    element('button', {
+                        textContent: 'clear',
+                        on: { click: () => this.sendClear() }
+                    }),
+                    this.#elm_detail_act_suspend = element('button', {
+                        textContent: 'suspend',
+                        on: { click: () => this.sendSuspend() }
+                    })
+                ]
+            })
+        ])
+
+        insertCell(detailRow, undefined, {
+            colSpan: row.cells.length,
+            childrens: [cellCnt]
+        })
+
+        RunList.list.set(this.id, this)
+        if (RunList.autoflushEnable && RunList.list.size > RunList.autoflushThreshold) RunList.flush()
+    }
+
+    readonly id: number
+    readonly type: RunType
+    readonly duration: number
+    readonly fuctionJSON: JSONInspect.Values.Function
+
+    readonly row: HTMLTableRowElement
+    #elm_status
+    readonly elm_avgTime
+    readonly elm_maxTim
+
+    readonly detailRow: HTMLTableRowElement
+    readonly detailCnt: HTMLDivElement
+    #elm_detail_addstack
+    #elm_detail_clearstack
+    #elm_detail_act_list
+    #elm_detail_act_suspend
+
+    #suspended = false
+    #cleared = false
+
+    get addStack() { return this.#elm_detail_addstack.textContent }
+    set addStack(v) { this.#elm_detail_addstack.textContent = v }
+
+    get clearStack() { return this.#elm_detail_clearstack.textContent }
+    set clearStack(v) { this.#elm_detail_clearstack.textContent = v }
+
+    get suspended() { return this.#suspended }
+    set suspended(v) {
+        if (this.#suspended === v) return
+        this.#suspended = v
+    
+        const s = this.#cleared ? 'cleared' : this.#suspended ? 'suspended' : 'active'
+        this.#elm_status.textContent = s
+        this.row.dataset.status = s
+
+        this.#elm_detail_act_suspend.textContent = v ? 'resume' : 'suspend'
+    }
+
+    get cleared() { return this.#cleared }
+    set cleared(v) {
+        if (this.#cleared === v) return
+        this.#cleared = v
+    
+        const s = this.#cleared ? 'cleared' : this.#suspended ? 'suspended' : 'active'
+        this.#elm_status.textContent = s
+        this.row.dataset.status = s
+
+        this.#elm_detail_act_list.hidden = !v
+        RunList.#flushCache[v ? 'add' : 'delete'](this.id)
+    }
+
+    async sendClear() {
+        if (this.cleared) return false
+        await sendEvalThrowable(`system.clearRun(${this.id})`)
+
+        this.cleared = true
+        return true
+    }
+
+    async sendSuspend(suspended = !this.suspended) {
+        if (suspended === this.suspended) return false
+        await sendEvalThrowable(`runList.list.get(${this.id}).suspended = ${suspended}`)
+
+        this.suspended = suspended
+        return true
+    }
+
+    clear(stack?: string) {
+        if (this.cleared) return false
+
+        this.cleared = true
+        if (stack) this.clearStack = stack
+
+        return true
+    }
+
+    delays: number[] = []
+    maxDelay = 0
+    avgDelay = 0
+    pending = false
+
+    tick(tick: number, delay: number, error?: JSONInspect.All) {
+        this.pending = true
+        this.row.dataset.exec = 'executed'
+
+        const delays = this.delays
+        delays.push(delay)
+        const avg = stableAverage(delays)
+        const max = Math.max(...delays)
+
+        const avgError = stableAverage( delays.map( v => Math.max( Math.abs(v - avg) - avg / 5, 0 ) ) )
+        delays.splice(0, Math.max( Math.min( (avgError - 1) * 5 , delays.length - 5 ), 0, delays.length - 100 ))
+
+        this.maxDelay = max
+        this.avgDelay = avg
+
+        const pulseCol = error ? `255, 128, 128` : `128, 128, 255`
+        if (RunList.pulse) this.row.animate([
+            { background: `rgba(${pulseCol}, 0.2)` },
+            { background: `rgba(${pulseCol}, 0.0)` },
+        ], {
+            duration: 250,
+            composite: 'add'
+        })
+
+        this._handleList(tick, delay, error, avg, avgError)
+    }
+
+    get isListed() { return RunList.list.has(this.id) }
+    unlist() {
+        if (!this.isListed) return false
+
+        RunList.list.delete(this.id)
+        this.row.remove()
+        this.detailRow.remove()
+
+        return true
+    }
+
+    abstract _handleList(tick: number, delay: number, error: JSONInspect.All | undefined, timingAvgDelay: number, timingAvgError: number): void
+}
+
+export class RunTimeoutList extends RunList {
+    constructor(id: number, type: 'run' | 'runTimeout', duration: number, fn: JSONInspect.Values.Function, addStack = '') {
+        super(id, type, duration, fn, addStack)
+
+        this.detailCnt.append(
+            element('div', {
+                styles: { 'grid-area': 'cnt' },
+                childrens: [
+                    createTable({
+                        classes: 'space-x',
+                        tbody: [
+                            ['tick'  , this.#res_tick = createText('--')],
+                            ['delay' , this.#res_delay = createText('--')],
+                            ['error?', this.#res_error = element('div')]
+                        ]
+                    })
+                ]
+            })
+        )
+    }
+
+    #res_tick: Text
+    #res_delay: Text
+    #res_error: HTMLElement
+
+    declare type: 'run' | 'runTimeout'
+
+    _handleList(tick: number, delay: number, error: JSONInspect.All | undefined, timingAvgDelay: number, timingAvgError: number) {
+        this.#res_tick.textContent = tick + ''
+        this.#res_delay.textContent = delay + 'ms'
+        if (error) this.#res_error.replaceChildren(uninspectJSONToElement(error))
+    }
+}
+
+export class RunIntervalList extends RunList {
+    constructor(id: number, type: 'runInterval', duration: number, fn: JSONInspect.Values.Function, addStack = '') {
+        super(id, type, duration, fn, addStack)
+
+        const etable = createTable({
+            styles: { 'grid-area': '1 / 1 / 1 / 1' },
+            classes: ['row-2', 'border'],
+            thead: [['tick', 'error?']]
+        })
+        const etbody = etable.createTBody()
+
+        const labels: string[] = []
+        const sets: Record<'time' | 'avg' | 'avgErr' | 'avgSize', ChartDataset<'line'>> = {
+            time    : { data: [], label: 'time', pointStyle: false },
+            avg     : { data: [], label: 'average', pointStyle: false },
+            avgErr  : { data: [], label: 'avgerr', pointStyle: false, yAxisID: 'y1', hidden: true },
+            avgSize : { data: [], label: 'avgsize', pointStyle: false, yAxisID: 'y1', hidden: true }
+        }
+
+        const canvasCnt = element('div', {
+            styles: { 'grid-area': '1 / 2 / 1 / 2' },
+            classes: ['shrink-max', 'noflow']
+        })
+        const chart = new Chart<'line'>(
+            canvasCnt.appendChild(element('canvas')),
+            {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: Object.values(sets)
+                },
+                options: {
+                    onResize: self => self.resize(self.canvas.clientWidth, self.canvas.clientHeight),
+                    maintainAspectRatio: false,
+                    animation: false,
+        
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+        
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.25)' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+    
+                            min: 0,
+                            suggestedMax: 100,
+    
+                            grid: {
+                                drawOnChartArea: false,
+                                drawTicks: false
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        this.detailCnt.append(
+            element('div', {
+                classes: 'run-cnt-interval',
+                childrens: [etable, canvasCnt]
+            })
+        )
+
+        this.#errTbody = etbody
+        this.#graph = { chart, sets, labels }
+    }
+
+    declare type: 'runInterval'
+
+    #errTbody: HTMLTableSectionElement
+    #graph: {
+        chart: ChartInstance<'line'>
+        sets: {
+            time: ChartDataset
+            avg: ChartDataset
+            avgErr: ChartDataset
+            avgSize: ChartDataset
+        }
+        labels: string[]
+    }
+
+    get chart() { return this.#graph.chart }
+
+    _handleList(tick: number, delay: number, error: JSONInspect.All | undefined, timingAvgDelay: number, timingAvgError: number) {
+        if (error) {
+            const etbody = this.#errTbody
+
+            insertRow(etbody, undefined, [
+                tick + '',
+                uninspectJSONToElement(error)
+            ])
+
+            if (etbody.rows.length > 20) etbody.deleteRow(-1)
+        }
+
+        const { sets, labels } = this.#graph
+
+        sets.time.data.push(delay)
+        sets.avg.data.push(timingAvgDelay)
+        sets.avgErr.data.push(timingAvgError * 100)
+        sets.avgSize.data.push(this.delays.length)
+
+        labels.push(tick.toString(20))
+        if (labels.length > 100) {
+            labels.shift()
+            for (const set of Object.values(sets)) set.data.shift()
+        }
+    }
+}
+
+function handleRunChange(ev: Bedrock.Events['system_run_change']) {
+    const { id, type, duration, fn, stack, mode } = ev
+
+    let data = RunList.list.get(ev.id)
+    if (!data) data = type === 'runInterval' ? new RunIntervalList(id, type, duration, fn, stack) : new RunTimeoutList(id, type, duration, fn, stack)
+
+    switch (mode) {
+        case 'add': break
+
+        case 'clear': data.clear(ev.stack); break
+        case 'resume': data.suspended = false; break
+        case 'suspend': data.suspended = true; break
+    }
+}
+
+{
     const opts = getIdThrow('run-opts')
     const optsAutoclear = getIdThrow('run-o-autoclear', HTMLInputElement)
     const optsPulse = getIdThrow('run-o-pulse', HTMLInputElement)
     const optsClear = getIdThrow('run-o-clear', HTMLButtonElement)
 
-    const list = new Map<number, {
-        readonly row: HTMLTableRowElement
-
-        readonly statusElm: Text
-        readonly avgTimeElm: HTMLTableCellElement
-        readonly maxTimeElm: HTMLTableCellElement
-
-        readonly detail: {
-            readonly row: HTMLTableRowElement
-            readonly clear: Text
-            readonly content: RowDetailData
-            readonly act: {
-                list: HTMLDivElement
-                clear: HTMLButtonElement
-                suspend: HTMLButtonElement
-            }
-        }
-
-        readonly type: Bedrock.T_RunType
-        readonly duration: number
-        readonly timing: {
-            readonly list: number[]
-            avg: number
-            max: number
-        }
-
-        status: boolean
-        suspended: boolean
-        pending: boolean
-    }>()
-
-    type RowDetailData = {
-        interval: false
-
-        errElm: HTMLDivElement
-    } | {
-        interval: true
-
-        table: HTMLTableElement
-        tbody: HTMLTableSectionElement
-
-        graph: {
-            chart: InstanceType<typeof Chart>
-            sets: {
-                time: ChartDataset
-                avg: ChartDataset
-                avgsize: ChartDataset
-                avgerr: ChartDataset
-            }
-            labels: string[]
-        }
-    }
-
-    function handleChange(ev: Bedrock.Events['system_run_change']) {
-        switch (ev.mode) {
-            case 'add': {
-                let statusElm, avgTimeElm, maxTimeElm
-                const row = insertRow(tbody, 0, {
-                    childrens: [
-                        ev.type,
-                        statusElm = createText('active'),
-                        ev.duration + '',
-                        ev.id + '',
-                        uninspectFunction(ev.fn, true).elm,
-                        avgTimeElm = element('td', '---'),
-                        maxTimeElm = element('td', '---')
-                    ],
-                    datas: {
-                        type: ev.type,
-                        status: 'active',
-                        exec: 'unexecuted'
-                    }
-                })
-    
-                row.addEventListener('click', () => detailRow.hidden = !detailRow.hidden)
-    
-                // detail
-    
-                const detailRow = insertRow(tbody, 1, {
-                    classes: 'detail',
-                    hidden: true
-                })
-    
-                let detailClearElm, detailActListElm, detailActClearElm, detailActSuspendElm
-                const cellCnt = element('div', [
-                    element('div', {
-                        styles: { 'grid-area': 'add' },
-                        childrens: [
-                            element('div', 'add stack'),
-                            ev.stack
-                        ]
-                    }),
-                    element('div', {
-                        styles: { 'grid-area': 'clear' },
-                        childrens: [
-                            element('div', 'clear stack'),
-                            detailClearElm = createText('-')
-                        ]
-                    }),
-                    detailActListElm = element('div', {
-                        classes: 'flex',
-                        styles: {
-                            'grid-area': 'act',
-                            'gap': '8px'
-                        },
-                        childrens: [
-                            detailActClearElm = element('button', 'clear'),
-                            detailActSuspendElm = element('button', 'suspend')
-                        ]
-                    }),
-                ])
-                insertCell(detailRow, undefined, {
-                    colSpan: row.cells.length,
-                    childrens: [cellCnt]
-                })
-    
-                detailActClearElm.addEventListener('click', () => {
-                    fetchThrow('/session/sendeval', {
-                        method: 'POST',
-                        body: `system.clearRun(${ev.id})`
-                    })
-                }, { once: true })
-
-                detailActSuspendElm.addEventListener('click', () => {
-                    fetchThrow('/session/sendeval', {
-                        method: 'POST',
-                        body: `runList.list.get(${ev.id}).suspended = ${row.dataset.status !== 'suspended'}`
-                    })
-                })
-    
-                let detailMode: RowDetailData
-                if (ev.type === 'runInterval') {
-                    const table = element('table', { classes: ['row-2', 'border', 'fill-x'] })
-                    const thead = table.createTHead()
-                    const tbody = table.createTBody()
-                    insertRow(thead, undefined, [ 'tick', 'error?' ])
-    
-                    const timeSets: ChartDataset = { data: [], label: 'time', pointStyle: false }
-                    const avgSets: ChartDataset = { data: [], label: 'average', pointStyle: false }
-                    const avgErrSets: ChartDataset = { data: [], label: 'avgerr', pointStyle: false, yAxisID: 'y1', hidden: true }
-                    const avgSizeSets: ChartDataset = { data: [], label: 'avgsize', pointStyle: false, yAxisID: 'y1', hidden: true }
-
-                    const labels: string[] = []
-                    const chart = new Chart(
-                        element('canvas', {
-                            classes: ['shrink']
-                        }), {
-                            type: 'line',
-                            data: {
-                                labels,
-                                datasets: [timeSets, avgSets, avgSizeSets, avgErrSets]
-                            },
-                            options: {
-                                onResize: self => self.resize(self.canvas.clientWidth, self.canvas.clientHeight),
-                                maintainAspectRatio: false,
-                                animation: false,
-                    
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom'
-                                    }
-                                },
-                    
-                                scales: {
-                                    x: { grid: { color: 'rgba(255, 255, 255, 0.25)' } },
-                                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                                    y1: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'right',
-    
-                                        min: 0,
-                                        suggestedMax: 100,
-    
-                                        grid: {
-                                            drawOnChartArea: false,
-                                            drawTicks: false
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    )
-    
-                    cellCnt.append(
-                        element('div', {
-                            styles: { 'grid-area': 'left' },
-                            childrens: [
-                                'errors',
-                                element('div', {
-                                    classes: 'flow-y',
-                                    styles: { 'max-height': '250px' },
-                                    childrens: [table]
-                                })
-                            ]
-                        })
-                    )
-    
-                    cellCnt.append(
-                        element('div', {
-                            classes: ['noflow', 'flex-col'],
-                            styles: {
-                                'grid-area': 'right',
-                                'height': '250px'
-                            },
-                            childrens: [
-                                'timing',
-                                chart.canvas
-                            ]
-                        })
-                    )
-    
-                    detailMode = {
-                        interval: true,
-                        table,
-                        tbody,
-                        graph: {
-                            chart: chart,
-                            labels,
-                            sets: {
-                                time: timeSets,
-                                avg: avgSets,
-                                avgsize: avgSizeSets,
-                                avgerr: avgErrSets
-                            }
-                        }
-                    }
-                } else {
-                    let errElm
-                    cellCnt.append(
-                        element('div', {
-                            styles: { 'grid-area': 'left' },
-                            childrens: [
-                                element('div', 'result:'),
-                                errElm = element('div', '...')
-                            ]
-                        })
-                    )
-    
-                    detailMode = {
-                        interval: false,
-                        errElm
-                    }
-                }
-    
-                // list
-    
-                list.set(ev.id, {
-                    row,
-    
-                    statusElm,
-                    avgTimeElm,
-                    maxTimeElm,
-    
-                    detail: {
-                        row: detailRow,
-                        clear: detailClearElm,
-                        content: detailMode,
-                        act: {
-                            list: detailActListElm,
-                            clear: detailActClearElm,
-                            suspend: detailActSuspendElm
-                        }
-                    },
-    
-                    type: ev.type,
-                    duration: ev.duration,
-                    timing: {
-                        list: [],
-                        max: 0,
-                        avg: 0
-                    },
-
-                    status: true,
-                    suspended: false,
-                    pending: false,
-                })
-    
-                if (optsAutoclear.checked && tbody.rows.length > autoflushThreshold) flush()
-            } break
-
-            case 'clear': {
-                const data = list.get(ev.id)
-                if (!data) return
-    
-                const { detail } = data
-    
-                // data
-                data.status = false
-    
-                // element
-                data.statusElm.textContent = 'cleared'
-                data.row.dataset.status = 'cleared'
-    
-                // detail
-                detail.clear.textContent = ev.stack
-                detail.act.list.remove()
-            } break
-
-            case 'suspend': {
-                const data = list.get(ev.id)
-                if (!data) return
-
-                data.suspended = true
-
-                data.statusElm.textContent = 'suspended'
-                data.row.dataset.status = 'suspended'
-                data.detail.act.suspend.textContent = 'resume'
-            } break
-
-            case 'resume': {
-                const data = list.get(ev.id)
-                if (!data) return
-
-                data.suspended = false
-
-                data.statusElm.textContent = 'active'
-                data.row.dataset.status = 'active'
-                data.detail.act.suspend.textContent = 'suspend'
-            } break
-        }
-    }
-
-    function flush() {
-        for (const [k, v] of list)
-            if (!v.status) {
-                list.delete(k)
-
-                const { detail } = v
-
-                v.row.remove()
-
-                detail.row.remove()
-                if (detail.content.interval) detail.content.graph.chart.destroy()
-            }
-    }
-
-    // handler
+    // inputs
 
     opts.addEventListener('change', ev => {
         const elm = ev.target
@@ -368,94 +412,26 @@ function timeBar(v: number)  {
         )) return
 
         const {type, value} = elm.dataset
-        table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
+        RunList.table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
     })
 
-    optsClear.addEventListener('click', flush)
+    optsClear.addEventListener('click', () => RunList.flush())
+    optsAutoclear.addEventListener('change', () => RunList.autoflushEnable = optsAutoclear.checked)
+    optsPulse.addEventListener('change', () => RunList.pulse = optsPulse.checked)
 
     // init & sse
 
-    const init = fetchThrow('/session/script/system_run_change')
-        .then(async v => {
-            const text = await v.text()
-            for (const [i, d] of text.split(/\r?\n/).entries()) {
-                if (!d) continue
+    for (const { id, duration, fn, stack, status, type, clearStack } of init.script.systemRuns) {
+        const data = type === 'runInterval' ? new RunIntervalList(id, type, duration, fn, stack) : new RunTimeoutList(id, type, duration, fn, stack)
 
-                handleChange(JSON.parse(d))
-                if (i % 5 === 0) await sleep(1)
-            }
-        })
-        .catch(e => console.error(e))
-    
-    bedrockEvents.addEventListener('system_run_change', async ({ detail: data }) => {
-        await init
-        handleChange(data)
-    })
+        if (status === 'clear') data.clear(clearStack)
+        if (status === 'suspend') data.suspended = true
+    }
 
-    bedrockEvents.addEventListener('system_run', ({ detail: data }) => {
-        const int = list.get(data.id)
-        if (!int) return
+    bedrockEvents.addEventListener('system_run_change', async ({ detail: data }) => handleRunChange(data))
+    bedrockEvents.addEventListener('system_run', ({ detail: data }) => RunList.handleRun(data))
 
-        const { timing, detail: { content: detail } } = int, { list: tlist } = timing
-
-        // timing list
-        
-        tlist.push(data.delta)
-
-        const max = Math.max(...tlist),
-            avg = stableAverage(tlist),
-            error = stableAverage( tlist.map( v => Math.max( Math.abs(v - avg) - avg / 5, 0 ) ) )
-        
-        tlist.splice(0, Math.max( Math.min( (error - 1) * 5 , tlist.length - 5 ), 0, tlist.length - 100 ))
-
-        // timing avg & max
-
-        timing.avg = avg
-        timing.max = max
-
-        // pulse
-        const pulseCol = data.error ? `255, 128, 128` : `128, 128, 255`
-        if (optsPulse.checked) int.row.animate([
-            { background: `rgba(${pulseCol}, 0.2)` },
-            { background: `rgba(${pulseCol}, 0.0)` },
-        ], {
-            duration: 250,
-            composite: 'add'
-        })
-    
-        // data
-        int.row.dataset.exec = 'executed'
-        int.pending = true
-
-        // detail
-        if (detail.interval) {
-            const { graph: { labels, sets }, tbody } = detail
-
-            sets.avg.data.push(avg)
-            sets.time.data.push(data.delta)
-            sets.avgsize.data.push(tlist.length)
-            sets.avgerr.data.push(error * 100)
-
-            labels.push(data.tick.toString(20))
-            if (labels.length > 100) {
-                for (const f of Object.values(sets)) f.data.shift()
-                labels.shift()
-            }
-
-            if (data.error) {
-                insertRow(tbody, 0, [
-                    data.tick + '',
-                    uninspectJSONToElement(data.error)
-                ])
-
-                if (tbody.rows.length > 10) tbody.deleteRow(-1)
-            }
-        } else {
-            detail.errElm.replaceChildren(data.error ? uninspectJSONToElement(data.error) : '-')
-        }
-    })
-
-    // footer
+    // footer & async updater
 
     const footer = {
         rcount: getIdThrow('rfoot-rcount'),
@@ -466,31 +442,29 @@ function timeBar(v: number)  {
 
     setInterval(() => {
         let avgtime = 0, avgpeak = 0, peaktime = 0, c = 0
-        for (const data of list.values()) {
-            // updater
-            for (const v of list.values()) {
-                if (v.pending) {
-                    const { avgTimeElm, maxTimeElm, timing: { avg, max, list } } = v
-                    v.pending = false
-                        
-                    avgTimeElm.textContent = `${avg.toFixed(2).padStart(5)}ms (${list.length})`
-                    avgTimeElm.style.background = timeBar(avg)
-        
-                    maxTimeElm.textContent = max + 'ms'
-                    maxTimeElm.style.background = timeBar(max)
+        for (const data of RunList.list.values()) {
+            const { maxDelay, avgDelay } = data
 
-                    if (v.detail.content.interval && !v.detail.row.hidden)
-                        v.detail.content.graph.chart.update()
-                }
+            // updater
+            if (data.pending) {
+                const { elm_avgTime, elm_maxTim, delays } = data
+                data.pending = false
+                    
+                elm_avgTime.textContent = `${avgDelay.toFixed(2).padStart(5)}ms (${delays.length})`
+                elm_avgTime.style.background = timeBar(avgDelay)
+    
+                elm_maxTim.textContent = maxDelay + 'ms'
+                elm_maxTim.style.background = timeBar(maxDelay)
+
+                if (data instanceof RunIntervalList) data.chart.update()
             }
 
             // footer
-            if (data.status && !data.suspended && data.type !== 'runTimeout') {
-                const timing = data.timing
+            if (!data.cleared && !data.suspended && data.type !== 'runTimeout') {
                 c++
-                avgpeak += timing.avg
-                avgtime += timing.avg / Math.max(data.duration, 1)
-                peaktime += timing.max
+                avgpeak += avgDelay
+                avgtime += avgDelay / Math.max(data.duration, 1)
+                peaktime += maxDelay
             }
         }
 
@@ -501,11 +475,139 @@ function timeBar(v: number)  {
     }, 250)
 }
 
-// run time
-{
-    const table = getIdThrow('rtime-list', HTMLTableElement)
-    const tbody = table.tBodies.item(0) ?? table.createTBody()
+export class RunLogList {
+    static readonly table = getIdThrow('rtime-list', HTMLTableElement)
+    static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 
+    static logLimit = 200
+
+    static #filterMinDelay = 1
+    static #filterMinCount = 1
+    static #filterId = /.?/
+
+    static get filterMinDelay() { return this.#filterMinDelay }
+    static set filterMinDelay(v) {
+        this.#filterMinDelay = v
+        this.#updateFilter()
+    }
+    static get filterMinCount() { return this.#filterMinCount }
+    static set filterMinCount(v) {
+        this.#filterMinCount = v
+        this.#updateFilter()
+    }
+    static get filterId() { return this.#filterId }
+    static set filterId(v) {
+        this.#filterId = v
+        this.#updateFilter()
+    }
+
+    static #updateFilter() {
+        for (const row of iterateLength(this.list.rows))
+            if (!row.classList.contains('detail'))
+                row.hidden = !this.#testFilter(row.dataset)
+    }
+
+    static #testFilter({time = '0', count = '0', ids = ''}: DOMStringMap) {
+        return +time >= this.filterMinDelay
+            && +count >= this.filterMinCount
+            && this.#filterId.test(ids)
+    }
+
+    constructor(tick = 0, timing?: Iterable<LogType>) {
+        this.row = insertRow(RunLogList.list, 0, {
+            childrens: [
+                this.#elm_tick = createText(tick + ''),
+                this.#elm_runs_bar = element('td'),
+                this.#elm_timing_bar = element('td')
+            ],
+            on: {
+                click: () => detailRow.hidden = !detailRow.hidden
+            }
+        })
+
+        const sTable = createTable({
+            classes: ['row-2', 'border', 'fill-x'],
+            thead: [[ 'id', 'function', 'time', 'error?' ]]
+        })
+        this.#elm_detail_timing_list = sTable.createTBody()
+
+        const detailRow = this.detailRow = insertRow(RunLogList.list, 1, {
+            classes: 'detail',
+            hidden: true,
+            childrens: [
+                element('td', {
+                    colSpan: 3,
+                    childrens: [ element('div', sTable) ]
+                })
+            ]
+        })
+
+        if (timing) this.setTiming(timing)
+
+        if (RunLogList.list.rows.length > RunLogList.logLimit * 2) {
+            RunLogList.list.deleteRow(-1)
+            RunLogList.list.deleteRow(-1)
+        }
+    }
+
+    readonly row: HTMLTableRowElement
+    #elm_tick
+    #elm_runs_bar
+    #elm_timing_bar
+
+    readonly detailRow: HTMLTableRowElement
+    #elm_detail_timing_list
+
+    get tick() { return Number(this.#elm_tick.textContent) }
+    set tick(v) { this.#elm_tick.textContent = String(v) }
+
+    setTiming(list: Iterable<LogType>) {
+        let c = 0, t = 0, ids: number[] = []
+
+        this.#elm_detail_timing_list.replaceChildren()
+
+        for (const { fn, time, error, id } of list) {
+            insertRow(this.#elm_detail_timing_list, undefined, [
+                uninspectFunction(fn, true).elm,
+                element('td', {
+                    styles: { 'background': timeBar(time)},
+                    textContent: time + 'ms'
+                }),
+                error ? uninspectJSONToElement(error) : '-'
+            ])
+
+            c ++
+            t += time
+            ids.push(id)
+        }
+
+        this.#elm_runs_bar.style.background = valueBar(c, [128,192,255], [64,64,255], 8)
+        this.#elm_runs_bar.textContent = c + ''
+
+        this.#elm_timing_bar.style.background = timeBar(t)
+        this.#elm_timing_bar.textContent = t + 'ms'
+
+        this.row.dataset.time = t + ''
+        this.row.dataset.count = c + ''
+        this.row.dataset.ids = ids.join(' ')
+
+        this.row.hidden = !RunLogList.#testFilter(this.row.dataset)
+
+        return this
+    }
+
+    get isListed() { return Boolean(this.row.parentElement && this.detailRow.parentElement) }
+    unlist() {
+        if (!this.isListed) return false
+
+        this.row.remove()
+        this.detailRow.remove()
+
+        return true
+    }
+}
+
+{
     const optsMinDelay = getIdThrow('rtime-o-mindelay', HTMLInputElement)
     const optsMinCount = getIdThrow('rtime-o-mincount', HTMLInputElement)
     const optsFilterIds = getIdThrow('rtime-o-filterids', HTMLInputElement)
@@ -513,9 +615,9 @@ function timeBar(v: number)  {
     const optsPause = getIdThrow('rtime-o-pause', HTMLButtonElement)
 
     let fns: Bedrock.Events['system_run'][] = []
-    let stall: HTMLTableRowElement[] = []
+    let stall: [number, LogType[]][] = []
 
-    // handler
+    // inputs
 
     let rtimePaused = false
     optsPause.addEventListener('click', () => {
@@ -527,25 +629,11 @@ function timeBar(v: number)  {
         }
     })
 
-    function updateFilter() {
-        for (let i = 0; i < tbody.rows.length; i += 2) {
-            const row = tbody.rows.item(i)
-            if (!row) continue
-            row.hidden = !testFilter(row.dataset)
-        }
-    }
+    optsMinDelay.addEventListener('change', () => RunLogList.filterMinDelay = optsMinDelay.valueAsNumber)
+    optsMinCount.addEventListener('change', () => RunLogList.filterMinCount = optsMinCount.valueAsNumber)
+    optsFilterIds.addEventListener('change', () => RunLogList.filterId = optsFilterIds.validity.valid ? /.?/ : RegExp(optsFilterIds.value.replace(/\d+/, '\\b$&\\b')))
 
-    function testFilter({time = '0', count = '0', ids = ''}: DOMStringMap) {
-        return +time >= optsMinDelay.valueAsNumber
-            && +count >= optsMinCount.valueAsNumber
-            && ( optsFilterIds.validity.valid && optsFilterIds.value ? RegExp(optsFilterIds.value.replace(/\d+/g, ',$&,')).test(ids) : true )
-    }
-
-    optsMinDelay.addEventListener('change', updateFilter)
-    optsMinCount.addEventListener('change', updateFilter)
-    optsFilterIds.addEventListener('change', updateFilter)
-
-    // sse
+    // sse & async renderer
 
     bedrockEvents.addEventListener('system_run', ({ detail: data }) => {
         if (!rtimePaused) fns.push(data)
@@ -554,73 +642,23 @@ function timeBar(v: number)  {
     bedrockEvents.addEventListener('tick', ({ detail: data }) => {
         if (rtimePaused) return
 
-        const tTime = fns.reduce((a, b) => a + b.delta, 0)
-        const len = fns.length
-
-        // row
-
-        const row = element('tr', {
-            childrens: [
-                data.tick + '',
-                element('td', {
-                    styles: { 'background': timeBar(tTime)},
-                    textContent: tTime + 'ms'
-                }),
-                element('td', {
-                    styles: { 'background': valueBar(len, [128,192,255], [64,64,255], 20)},
-                    textContent: len + '',
-                })
-            ],
-            datas: {
-                time: tTime + '',
-                count: len + '',
-                ids: ',' + fns.map(v => v.id).join(',') + ','
-            }
-        })
-
-        row.hidden = !testFilter(row.dataset)
-
-        row.addEventListener('click', () => detailRow.hidden = !detailRow.hidden)
-
-        // detail
-
-        const sTable = element('table', { classes: ['row-2', 'border', 'fill-x'] })
-        const sThead = sTable.createTHead()
-        const sTbody = sTable.createTBody()
-        insertRow(sThead, undefined, [ 'id', 'function', 'time', 'error?' ])
-
-        for (const d of fns) {
-            insertRow(sTbody, undefined, [
-                d.id + '',
-                uninspectFunction(d.fn, true).elm,
-                element('td', {
-                    styles: { 'background': timeBar(d.delta)},
-                    textContent: d.delta + 'ms'
-                }),
-                d.error ? uninspectJSONToElement(d.error) : '-'
-            ])
-        }
-
-        const detailRow = element('tr', {
-            classes: 'detail',
-            hidden: true,
-        })
-
-        insertCell(detailRow, undefined, {
-            colSpan: 3,
-            childrens: [ element('div', sTable) ]
-        })
-
-        // data
-
+        stall.push([
+            data.tick,
+            fns.map( ({ id, delta, fn, error }) => ({ fn, id, time: delta, error }) )
+        ])
         fns = []
-        stall.push(row, detailRow)
     })
 
     setInterval(() => {
-        for (const [i, d] of stall.entries()) insertAt(tbody, i, d)
-        while (tbody.rows.length > 400) tbody.deleteRow(-1)
-
+        for (const [tick, timing] of stall) new RunLogList(tick, timing)
         stall = []
     }, 200)
+}
+
+type RunType = 'run' | 'runTimeout' | 'runInterval'
+type LogType = {
+    id: number;
+    fn: JSONInspect.Values.Function;
+    time: number;
+    error?: JSONInspect.All
 }

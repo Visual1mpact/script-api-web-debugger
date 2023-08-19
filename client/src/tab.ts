@@ -5,7 +5,7 @@ import './tabs/console.js'
 import './tabs/eval.js'
 import './tabs/event.js'
 import './tabs/properties.js'
-//import './tabs/runs.js'
+import './tabs/runs.js'
 import './tabs/stats.js'
 
 const tabs = new Map<string, HTMLElement>()
