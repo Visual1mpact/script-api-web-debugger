@@ -102,8 +102,8 @@ class PropertiesTable {
                 case 'boolean': {
                     const le: HTMLInputElement = element('input', {
                         type: 'checkbox',
-                        checked: v.value,
-                        on: { change: () => value = le.checked }
+                        checked: v.value ?? false,
+                        on: { input: () => value = le.checked }
                     })
                     e = le
                     value ??= false
@@ -112,9 +112,9 @@ class PropertiesTable {
                 case 'number': {
                     const le: HTMLInputElement = element('input', {
                         type: 'number',
-                        value: v.value,
+                        value: v.value ?? '',
                         classes: 'fill-x',
-                        on: { change: () => value = le.valueAsNumber }
+                        on: { input: () => value = le.valueAsNumber }
                     })
                     e = le
                     value ??= 0
@@ -123,9 +123,9 @@ class PropertiesTable {
                 case 'string': {
                     const le: HTMLTextAreaElement = element('textarea', {
                         maxLength: data.maxLength,
-                        value: v.value,
+                        value: v.value ?? '',
                         classes: 'fill-x',
-                        on: { change: () => value = le.value }
+                        on: { input: () => value = le.value }
                     })
                     e = le
                     value ??= ''
