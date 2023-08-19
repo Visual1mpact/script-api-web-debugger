@@ -437,10 +437,7 @@ export class EventListeners {
     })
 
     optsClear.addEventListener('click', () => EventListeners.flush())
-
-    optsAutoclear.addEventListener('change', () => {
-        EventListeners.autoflushEnable = optsAutoclear.checked
-    })
+    optsAutoclear.addEventListener('change', () => EventListeners.autoflushEnable = optsAutoclear.checked)
 
     // init & sse
 

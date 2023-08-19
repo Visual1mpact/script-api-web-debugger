@@ -89,7 +89,10 @@ export default class BedrockInterpreter {
                     data.status = mode === 'resume' ? 'add': mode
 
                     // add to clear cache (if clear)
-                    if (mode === 'clear') this.systemRunsClearCache.add(id)
+                    if (mode === 'clear') {
+                        data.clearStack = stack
+                        this.systemRunsClearCache.add(id)
+                    }
                 } break
 
                 case 'ready': {
