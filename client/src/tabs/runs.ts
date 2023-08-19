@@ -153,7 +153,7 @@ export abstract class RunList {
         this.#elm_status.textContent = s
         this.row.dataset.status = s
 
-        this.#elm_detail_act_list.hidden = !v
+        this.#elm_detail_act_list.hidden = v
         RunList.#flushCache[v ? 'add' : 'delete'](this.id)
     }
 
