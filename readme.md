@@ -90,7 +90,7 @@
 
 ### Notes
 
-- It is recommended to disable script watchdog, as the debugger adds little to alot amount of overheads depending on the pack's intensity and may cause unwanted.
+- It is recommended to disable script watchdog, as the debugger adds little to alot amount of overheads depending on the pack's intensity and may cause unwanted crash.
 
     It can be disabled by adding `script-watchdog-enable=false` in the `server.properties`.
 
