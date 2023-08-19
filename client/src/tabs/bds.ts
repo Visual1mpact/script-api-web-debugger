@@ -85,7 +85,7 @@ send.addEventListener('click', () => {
 })
 
 kill.addEventListener('click', () => {
-    fetchThrow('/session/kill', { method: 'POST' })
+    fetchThrow('/kill', { method: 'POST' })
 })
 
 getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
