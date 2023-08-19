@@ -6,7 +6,7 @@ const list = getIdThrow('eval-list')
 const input = getIdThrow('eval-input', HTMLTextAreaElement)
 const send = getIdThrow('eval-send', HTMLButtonElement)
 
-async function sendInput(value: string) {
+export async function sendInput(value: string) {
     let retElm, resElm
     const elm = element('div', {
         classes: 'noflow',

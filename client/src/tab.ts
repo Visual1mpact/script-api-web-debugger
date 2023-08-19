@@ -1,10 +1,10 @@
 import { getIdThrow, iterateLength } from './lib/misc.js'
 
-export { BDSList } from './tabs/bds.js'
-export { ConsoleList } from './tabs/console.js'
+import './tabs/bds.js'
+import './tabs/console.js'
 import './tabs/eval.js'
-export { EventListeners, EventLogList } from './tabs/event.js'
-export { PropertiesTable } from './tabs/properties.js'
+import './tabs/event.js'
+import './tabs/properties.js'
 //import './tabs/runs.js'
 import './tabs/stats.js'
 
