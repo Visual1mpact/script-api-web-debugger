@@ -91,6 +91,9 @@
 ### Notes
 
 - It is recommended to disable script watchdog, as the debugger adds little to alot amount of overheads depending on the pack's intensity and may cause unwanted.
+
+    It can be disabled by adding `script-watchdog-enable=false` in the `server.properties`.
+
 - Using this may cause high CPU usage on all processes (Bedrock, Node, and the browser).
 
 ## Commands
