@@ -93,7 +93,7 @@ class PropertiesTable {
         return this
     }
 
-    set(key: string, value: DynamicPropertyValue) {
+    set(key: string, value: Bedrock.T_DynamicPropertyValue) {
         const prop = this.#properties[key]
         if (!prop) return
 
@@ -110,8 +110,9 @@ class PropertiesTable {
 
 // world
 {
-    const wtable = new PropertiesTable(init.script.propertyRegistry.world)
-
+    const wtable = new PropertiesTable()
+    for (const [k, v] of init.script.propertyRegistry.world) wtable.register(k, v).set(k, init.script.propertyRegistry.worldInitProperties[k])
+    
     getIdThrow('properties-world-list-cnt').appendChild(wtable.table)
     getIdThrow('properties-world-est').replaceChildren(String(wtable.estimatedSize))
 
@@ -154,7 +155,7 @@ class PropertiesTable {
                 props: dynamicProperties.getAllEntity(ent)
             })
         `)
-        const { id, type, props } = uninspectJSON(res.result) as { id: string, type: string, props: Record<string, DynamicPropertyValue> }
+        const { id, type, props } = uninspectJSON(res.result) as { id: string, type: string, props: Record<string, Bedrock.T_DynamicPropertyValue> }
 
         const etable = new PropertiesTable(undefined, id)
         for (const [k, v] of entityProperties.get(type) ?? []) etable.register(k, v).set(k, props[k])
@@ -204,5 +205,3 @@ class PropertiesTable {
         trackList[data.entityId]?.table.set(data.property, data.value)
     })
 }
-
-type DynamicPropertyValue = string | number | boolean | undefined

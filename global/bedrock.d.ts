@@ -80,11 +80,12 @@ declare namespace Bedrock {
         property_registry: {
             world: [property: string, data: T_DynamicPropertyData][]
             entities: [id: string, properties: [property: string, data: T_DynamicPropertyData][]][]
+            worldInitProperties: Record<string, T_DynamicPropertyValue>
         }
 
         property_set: {
             property: string
-            value: string | number | boolean | undefined
+            value: T_DynamicPropertyValue
         } & ({
             type: 'world'
         } | {
@@ -180,6 +181,8 @@ declare namespace Bedrock {
         maxLength: number
         default?: string
     }
+
+    type T_DynamicPropertyValue = string | number | boolean | undefined
 
     type T_RunType = 'run' | 'runInterval' | 'runTimeout'
 }

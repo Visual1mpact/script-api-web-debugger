@@ -146,7 +146,8 @@ eventListeners.world_after.worldInitialize.subscribeInternal(async function self
 
     HookSignal.Outgoing.send('property_registry', {
         world: Array.from(regWldList),
-        entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)])
+        entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)]),
+        worldInitProperties: dynamicProperties.getAllWorld()
     })
 })
 
