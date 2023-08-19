@@ -33,7 +33,7 @@ export function element<T extends string>(tagName: T, opts?: ElementEditableObje
             elm.classList.add(...( typeof opts.classes !== 'string' ? opts.classes : [opts.classes] ))
         
         if (opts.styles)
-            for (const [k, v] of Array.isArray(opts.styles) || opts.styles instanceof Map ? opts.styles : Object.entries(opts.styles)) elm.style.setProperty(k, v)
+            for (const [k, v] of opts.styles[Symbol.iterator]?.() ?? Object.entries(opts.styles)) elm.style.setProperty(k, v)
     
         if (opts.datas) Object.assign(elm.dataset, opts.datas)
 
@@ -209,9 +209,7 @@ export type ElementEditableObject<T extends HTMLElement = HTMLElement, K extends
         [x: string]: any
         classes: string | Iterable<string>
         childrens: Iterable<Node | string>
-        styles: Record<string, string>
-            | Map<string, string>
-            | [string, string][]
+        styles: RecordOrIterable<string, string>
         datas: Record<string, string>
         on: {
             [K in string]: ( (<T extends Event>(ev: T) => any) )
