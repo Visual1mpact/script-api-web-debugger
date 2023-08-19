@@ -377,6 +377,14 @@ export class RunIntervalList extends RunList {
             for (const set of Object.values(sets)) set.data.shift()
         }
     }
+
+    unlist() {
+        if (!super.unlist()) return false
+
+        this.#graph.chart.destroy()
+
+        return true
+    }
 }
 
 function handleRunChange(ev: Bedrock.Events['system_run_change']) {
