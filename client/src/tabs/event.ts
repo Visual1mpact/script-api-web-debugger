@@ -17,9 +17,12 @@ export class EventLogList {
     static logLimit = 100
 
     static handle(ev: Bedrock.Events['event']) {
-        const data = new this(ev.name, ev.isSystem, ev.isBefore, ev.tick)
+        const { name, isBefore, isSystem, tick, timing: { functions, self, total } } = ev
+        const data = new this(name, isSystem, isBefore, tick)
+
         data.setData(ev.data)
-        data.row.addEventListener('click', () => data.setTiming(ev.timing.functions, ev.timing.self, ev.timing.total), { once: true })
+        data.setTiming([], functions.length, self, total)
+        data.row.addEventListener('click', () => data.setTiming(functions, functions.length, self, total), { once: true })
         return data
     }
 
@@ -116,8 +119,8 @@ export class EventLogList {
         return this
     }
 
-    setTiming(list: Iterable<{ fn: JSONInspect.Values.Function; time: number; error?: JSONInspect.All }>, self: number, total: number) {
-        let c = 0
+    setTiming(list: Iterable<{ fn: JSONInspect.Values.Function; time: number; error?: JSONInspect.All }>, count?: number, self = 0, total?: number) {
+        let c = 0, t = 0
 
         this.#elm_detail_timing_list.replaceChildren()
 
@@ -132,6 +135,7 @@ export class EventLogList {
             ])
 
             c ++
+            t += time
         }
 
         insertRow(this.#elm_detail_timing_list, undefined, [
@@ -143,11 +147,14 @@ export class EventLogList {
             '-'
         ])
 
+        if (count !== undefined) c = count
+        if (total !== undefined) t = total
+
         this.#elm_listener_bar.style.background = valueBar(c, [128,192,255], [64,64,255], 8)
         this.#elm_listener_bar.textContent = c + ''
 
-        this.#elm_timing_bar.style.background = timeBar(total)
-        this.#elm_timing_bar.textContent = total + 'ms'
+        this.#elm_timing_bar.style.background = timeBar(t)
+        this.#elm_timing_bar.textContent = t + 'ms'
 
         return this
     }
