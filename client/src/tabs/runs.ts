@@ -185,10 +185,13 @@ export abstract class RunList {
     delays: number[] = []
     maxDelay = 0
     avgDelay = 0
-    pending = false
+
+    pendingRender = false
+    renderLastAvg = 0
+    renderLastMax = 0
 
     tick(tick: number, delay: number, error?: JSONInspect.All) {
-        this.pending = true
+        this.pendingRender = true
         this.row.dataset.exec = 'executed'
 
         const delays = this.delays
@@ -454,15 +457,22 @@ function handleRunChange(ev: Bedrock.Events['system_run_change']) {
             const { maxDelay, avgDelay } = data
 
             // updater
-            if (data.pending) {
+            if (data.pendingRender) {
                 const { elm_avgTime, elm_maxTim, delays } = data
-                data.pending = false
-                    
+                data.pendingRender = false
+
                 elm_avgTime.textContent = `${avgDelay.toFixed(2).padStart(5)}ms (${delays.length})`
-                elm_avgTime.style.background = timeBar(avgDelay)
-    
                 elm_maxTim.textContent = maxDelay + 'ms'
-                elm_maxTim.style.background = timeBar(maxDelay)
+                
+                if (Math.abs(data.renderLastAvg - avgDelay) >= 0.1) {
+                    data.renderLastAvg = avgDelay
+                    elm_avgTime.style.background = timeBar(avgDelay)
+                }
+
+                if (data.renderLastMax !== maxDelay) {
+                    data.renderLastMax = maxDelay
+                    elm_maxTim.style.background = timeBar(maxDelay)
+                }
 
                 if (data instanceof RunIntervalList && !data.detailRow.hidden) data.chart.update()
             }
