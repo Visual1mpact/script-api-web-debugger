@@ -34,6 +34,8 @@ function elementValue(v: string | number | boolean | undefined) {
 }
 
 export class PropertiesTable {
+    static pulse = false
+
     constructor(properties?: RecordOrIterable<string, Bedrock.T_DynamicPropertyData>, entityId?: string) {
         this.table = createTable({
             classes: ['row-2', 'fill-x', 'border', 'properties-table'],
@@ -205,7 +207,7 @@ export class PropertiesTable {
         prop.value = value
 
         prop.valueCell.replaceChildren(elementValue(value))
-        prop.row.animate([
+        if (PropertiesTable.pulse) prop.row.animate([
             { background: `rgba(64, 64, 255, 0.2)` },
             { background: `rgba(64, 64, 255, 0)` },
         ], {
