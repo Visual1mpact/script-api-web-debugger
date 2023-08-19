@@ -17,7 +17,7 @@ export class EventLogList {
     static logLimit = 100
 
     static handle(ev: Bedrock.Events['event']) {
-        const data = new EventLogList(ev.name, ev.isSystem, ev.isBefore, ev.tick)
+        const data = new this(ev.name, ev.isSystem, ev.isBefore, ev.tick)
         data.setData(ev.data)
         data.setTiming(ev.timing.functions, ev.timing.self, ev.timing.total)
         return data
@@ -207,7 +207,7 @@ export class EventListeners {
     static logLimit = 30
 
     static flush() {
-        for (const id of this.#flushCache) EventListeners.list.get(id)?.unlist()
+        for (const id of this.#flushCache) this.list.get(id)?.unlist()
         this.#flushCache.clear()
     }
 
@@ -216,9 +216,9 @@ export class EventListeners {
     }
 
     static handle(ev: Bedrock.Events['event_change']) {
-        const id = EventListeners.idOf(ev.isSystem, ev.isBefore, ev.name, ev.fid)
-        let data = EventListeners.list.get(id)
-        if (!data) EventListeners.list.set(id, data = new EventListeners(ev.isSystem, ev.isBefore, ev.name, ev.fid, ev.fn))
+        const id = this.idOf(ev.isSystem, ev.isBefore, ev.name, ev.fid)
+        let data = this.list.get(id)
+        if (!data) this.list.set(id, data = new this(ev.isSystem, ev.isBefore, ev.name, ev.fid, ev.fn))
         const { row, detailRow } = data
 
         switch (ev.mode) {
@@ -227,8 +227,8 @@ export class EventListeners {
 
                 row.remove()
                 detailRow.remove()
-                EventListeners.tbody.prepend(detailRow)
-                EventListeners.tbody.prepend(row)
+                this.tbody.prepend(detailRow)
+                this.tbody.prepend(row)
 
                 data.#elm_tick.textContent = ev.tick + ''
             } break

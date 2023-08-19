@@ -17,7 +17,7 @@ export class BDSList {
     }
 
     static handle(data: Bedrock.ProcessEvents['line']) {
-        return new BDSList(data.level, data.level === 'unknown' ? data.raw : data.line)
+        return new this(data.level, data.level === 'unknown' ? data.raw : data.line)
     }
     
     constructor(level: LogLevelOrUnknown = 'unknown', message = '') {

@@ -17,7 +17,7 @@ export class ConsoleList {
     }
 
     static handle(data: Bedrock.Events['console']) {
-        return new ConsoleList(data.level, data.content, data.stack)
+        return new this(data.level, data.content, data.stack)
     }
 
     constructor(level: LogLevel = 'log', datas: JSONInspect.All[] = [], stack = '') {
