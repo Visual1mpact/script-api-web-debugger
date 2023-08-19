@@ -25,6 +25,8 @@ server.get('/data', async (req, res) => {
     const { bdsConsoleLog, consoleLog, eventLog, eventListeners, systemRuns, propertyRegistry, worldProperties } = bedrockInterpreter
     const { pid = -1, killed, exitCode, signalCode } = bedrock.process
 
+    const regAwaited = await propertyRegistry.promise
+
     const data: NodeBedrockInterpreter.GetData = {
         pid,
         killed,
@@ -47,7 +49,7 @@ server.get('/data', async (req, res) => {
                 }
             },
             systemRuns: Array.from(systemRuns.values()),
-            propertyRegistry: await propertyRegistry.promise,
+            propertyRegistry: regAwaited,
             worldProperties
         }
     }
