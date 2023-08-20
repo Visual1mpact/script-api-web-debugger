@@ -2,13 +2,12 @@ import { world, system } from '@minecraft/server'
 import { getStackTrace } from '../lib/misc.js'
 import { inspectJSON } from '../lib/jsoninspector.js'
 import HookSignal from '../lib/hooksig.js'
+import states from '../proc/state.js'
+
+states.event_inspect_enable = false
 
 let cid = 1
 const ids = new WeakMap<ListenerFn, number>()
-
-let config = {
-    inspectEventData: false
-}
 
 function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boolean, isBefore: boolean) {
     const o: Record<T, EventObject & {
@@ -53,9 +52,9 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
 
             const t1 = Date.now()
 
-            const jsondata: JSONInspect.All = config.inspectEventData
+            const jsondata: JSONInspect.All = states.event_inspect_enable
                 ? inspectJSON(data)
-                : { type: 'string', value: 'Event inspection is disabled. Evaluate eventListeners.config.inspectEventData = true to enable.' }
+                : { type: 'null' }
 
             const tSelf = Date.now() - t1
             const tTotal = Date.now() - t0
@@ -192,7 +191,6 @@ const eventListeners = {
     world_before: wrapEvent(world.beforeEvents, false, true),
     world_after: wrapEvent(world.afterEvents, false, false),
     system_before: wrapEvent(system.beforeEvents, true, true),
-    system_after: wrapEvent(system.afterEvents, true, false),
-    config
+    system_after: wrapEvent(system.afterEvents, true, false)
 }
 export default eventListeners

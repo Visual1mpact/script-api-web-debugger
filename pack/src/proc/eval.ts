@@ -7,6 +7,7 @@ import * as mcui from '@minecraft/server-ui'
 import run from "../wrap/run.js"
 import dynamicProperties from "../wrap/propreg.js"
 import eventListeners from "../wrap/event.js"
+import states from "./state.js"
 
 const asyncConstructor = (async() => {}).constructor as Function
 
@@ -42,6 +43,7 @@ const ectx: any = {
     runList: run,
     dynamicProperties,
     eventListeners,
+    states,
 
     $_: undefined,
 

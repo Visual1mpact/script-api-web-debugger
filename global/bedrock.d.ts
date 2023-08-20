@@ -93,6 +93,11 @@ declare namespace Bedrock {
             entityType: string
             entityId: string
         })
+
+        state_set: {
+            state: string
+            value: T_DynamicPropertyValue
+        }
     }
 
     interface ProcessEvents {
@@ -166,6 +171,11 @@ declare namespace Bedrock {
         buf_cancel: string
 
         conn_id: string
+
+        set_state: {
+            state: string
+            value: string
+        }
 
         [k: string]: any
     }

@@ -104,6 +104,7 @@ export default class BedrockInterpreter {
                     this.systemRuns.clear()
                     this.propertyRegistry.resolve((this.propertyRegistry = new PromiseController).promise)
                     this.worldProperties = Object.create(null)
+                    this.states = Object.create(null)
                 } break
 
                 case 'property_set': {
@@ -111,6 +112,10 @@ export default class BedrockInterpreter {
                     const { property, value } = ev.data
 
                     this.worldProperties[property] = value
+                } break
+
+                case 'state_set' : {
+                    this.states[ev.data.state] = ev.data.value
                 }
             }
         })
@@ -145,6 +150,8 @@ export default class BedrockInterpreter {
 
     propertyRegistry = new PromiseController<Bedrock.Events['property_registry']>
     worldProperties: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
+
+    states: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
 
     sendEval(script: string) {
         const id = crypto.randomBytes(8).toString('hex')

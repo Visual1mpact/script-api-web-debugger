@@ -14,6 +14,7 @@ declare namespace NodeBedrockInterpreter {
             systemRuns: SystemRunData[]
             propertyRegistry: Bedrock.Events['property_registry']
             worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
+            states: Record<string, Bedrock.T_DynamicPropertyValue>
         }
     }
 
