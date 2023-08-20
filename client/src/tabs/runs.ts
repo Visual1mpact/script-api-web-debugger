@@ -664,7 +664,7 @@ export class RunLogList {
 
     optsMinDelay.addEventListener('change', () => RunLogList.filterMinDelay = optsMinDelay.valueAsNumber)
     optsMinCount.addEventListener('change', () => RunLogList.filterMinCount = optsMinCount.valueAsNumber)
-    optsFilterIds.addEventListener('change', () => RunLogList.filterId = optsFilterIds.validity.valid ? /.?/ : RegExp(optsFilterIds.value.replace(/\d+/, '\\b$&\\b')))
+    optsFilterIds.addEventListener('change', () => RunLogList.filterId = !optsFilterIds.validity.valid ? /.?/ : RegExp(optsFilterIds.value.replace(/\d+/, '\\b$&\\b')))
 
     // sse & async renderer
 
