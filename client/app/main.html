@@ -294,49 +294,51 @@
                 <div style="grid-area: border; border-right: 1px solid var(--border-mid);"></div>
 
                 <!-- Run options -->
-                <table id="run-opts" class="space-x">
-                    <tbody>
-                        <tr>
-                            <td><b>type</b></td>
+                <div class="flex" style="grid-area: run-opts; justify-content: space-between;">
+                    <table id="run-opts" class="space-x">
+                        <tbody>
+                            <tr>
+                                <td><b>type</b></td>
+    
+                                <td>run</td>
+                                <td><input type="checkbox" data-type="type" data-value="run" checked></td>
+                                <td>runInterval</td>
+                                <td><input type="checkbox" data-type="type" data-value="runInterval" checked></td>
+                                <td>runTimeout</td>
+                                <td><input type="checkbox" data-type="type" data-value="runTimeout" checked></td>
+                            </tr>
+                            <tr>
+                                <td><b>status</b></td>
+    
+                                <td>active</td>
+                                <td><input type="checkbox" data-type="status" data-value="active" checked></td>
+                                <td>cleared</td>
+                                <td><input type="checkbox" data-type="status" data-value="cleared" checked></td>
+                                <td>suspended</td>
+                                <td><input type="checkbox" data-type="status" data-value="suspended" checked></td>
+                            </tr>
+                            <tr>
+                                <td><b>exec</b></td>
+                                
+                                <td>unexecuted</td>
+                                <td><input type="checkbox" data-type="exec" data-value="unexecuted" checked></td>
+                                <td>executed</td>
+                                <td><input type="checkbox" data-type="exec" data-value="executed" checked></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+    
+                                <td><b>autoclear</b></td>
+                                <td><input id="run-o-autoclear" type="checkbox" checked></td>
+                                <td><b>pulse</b></td>
+                                <td><input id="run-o-pulse" type="checkbox"></td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                            <td>run</td>
-                            <td><input type="checkbox" data-type="type" data-value="run" checked></td>
-                            <td>runInterval</td>
-                            <td><input type="checkbox" data-type="type" data-value="runInterval" checked></td>
-                            <td>runTimeout</td>
-                            <td><input type="checkbox" data-type="type" data-value="runTimeout" checked></td>
-                        </tr>
-                        <tr>
-                            <td><b>status</b></td>
-
-                            <td>active</td>
-                            <td><input type="checkbox" data-type="status" data-value="active" checked></td>
-                            <td>cleared</td>
-                            <td><input type="checkbox" data-type="status" data-value="cleared" checked></td>
-                            <td>suspended</td>
-                            <td><input type="checkbox" data-type="status" data-value="suspended" checked></td>
-                        </tr>
-                        <tr>
-                            <td><b>exec</b></td>
-                            
-                            <td>unexecuted</td>
-                            <td><input type="checkbox" data-type="exec" data-value="unexecuted" checked></td>
-                            <td>executed</td>
-                            <td><input type="checkbox" data-type="exec" data-value="executed" checked></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-
-                            <td><b>autoclear</b></td>
-                            <td><input id="run-o-autoclear" type="checkbox" checked></td>
-                            <td><b>pulse</b></td>
-                            <td><input id="run-o-pulse" type="checkbox"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <!-- Run actions -->
-                <div style="grid-area: run-acts">
-                    <button id="run-o-clear">unlist cleared</button>
+                    <div>
+                        <button id="run-o-clear">unlist cleared</button>
+                    </div>
                 </div>
                 <!-- Run list -->
                 <div style="grid-area: run-list;" class="flow-y">

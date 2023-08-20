@@ -1,13 +1,13 @@
 #tab-runs {
     display: grid;
     grid-template-areas:
-        'run-opts run-acts border rtime-opts'
-        'run-opts run-acts border rtime-list'
-        'run-list run-list border rtime-list'
-        'run-foot run-foot border rtime-list'
+        'run-opts border rtime-opts'
+        'run-opts border rtime-list'
+        'run-list border rtime-list'
+        'run-foot border rtime-list'
     ;
     grid-template-rows: auto auto 1fr auto;
-    grid-template-columns: 1.2fr auto auto 0.8fr;
+    grid-template-columns: 1.3fr auto 0.7fr;
     gap: 8px;
 }
 

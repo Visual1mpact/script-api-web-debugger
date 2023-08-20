@@ -597,6 +597,7 @@ export class RunLogList {
 
         for (const { fn, time, error, id } of list) {
             insertRow(this.#elm_detail_timing_list, undefined, [
+                id + '',
                 uninspectFunction(fn, true).elm,
                 element('td', {
                     styles: { 'background': timeBar(time)},
