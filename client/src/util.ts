@@ -14,3 +14,10 @@ export async function sendEvalThrowable(script: string) {
     if (res.error) throw new Error('Eval failed', { cause: res })
     return res
 }
+
+export function sendData<K extends keyof Bedrock.Messages>(name: K, data: Bedrock.Messages[K]) {
+    return fetchThrow('/senddata/' + name, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+}

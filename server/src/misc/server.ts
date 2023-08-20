@@ -63,6 +63,19 @@ server.post('/send', express.raw({ type: () => true }), (req, res) => {
     res.end()
 })
 
+server.post('/senddata/:name', (req, res) => {
+    const str = bedrock.createDataStream(req.params.name)
+
+    req.pipe(str, { end: false })
+    req.on('end', () => {
+        if (req.complete) str.end(() => res.end())
+        else {
+            res.end()
+            str.destroy()
+        }
+    })
+})
+
 server.post('/kill', (req, res) => {
     bedrock.process.kill()
     res.end()
