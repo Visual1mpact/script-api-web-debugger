@@ -271,7 +271,7 @@ export class RunIntervalList extends RunList {
 
         const etable = createTable({
             styles: { 'grid-area': '1 / 1 / 1 / 1' },
-            classes: ['row-2', 'border'],
+            classes: ['row-2', 'border', 'fill-x'],
             thead: [['tick', 'error?']]
         })
         const etbody = etable.createTBody()
@@ -284,12 +284,8 @@ export class RunIntervalList extends RunList {
             avgSize : { data: [], label: 'avgsize', pointStyle: false, yAxisID: 'y1', hidden: true }
         }
 
-        const canvasCnt = element('div', {
-            styles: { 'grid-area': '1 / 2 / 1 / 2' },
-            classes: ['shrink-max', 'noflow']
-        })
         const chart = new Chart<'line'>(
-            canvasCnt.appendChild(element('canvas')),
+            element('canvas'),
             {
                 type: 'line',
                 data: {
@@ -331,7 +327,18 @@ export class RunIntervalList extends RunList {
         this.detailCnt.append(
             element('div', {
                 classes: 'run-cnt-interval',
-                childrens: [etable, canvasCnt]
+                childrens: [
+                    element('div', {
+                        styles: { 'grid-area': ' 1 / 1 / 1 / 1' },
+                        classes: ['flow-y', 'fill-y'],
+                        childrens: [etable]
+                    }),
+                    element('div', {
+                        styles: { 'grid-area': '1 / 2 / 1 / 2' },
+                        classes: ['shrink-max', 'noflow'],
+                        childrens: [chart.canvas]
+                    })
+                ]
             })
         )
 
@@ -359,7 +366,7 @@ export class RunIntervalList extends RunList {
         if (error) {
             const etbody = this.#errTbody
 
-            insertRow(etbody, undefined, [
+            insertRow(etbody, 0, [
                 tick + '',
                 uninspectJSONToElement(error)
             ])
