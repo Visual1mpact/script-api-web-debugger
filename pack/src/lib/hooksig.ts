@@ -1,10 +1,9 @@
-import eventListeners from "../wrap/event.js";
 import EventEmitter from "./event.js";
-import { ScriptEventSource } from '@minecraft/server'
+import { ScriptEventSource, system } from '@minecraft/server'
 
 const log = console.log
 
-eventListeners.system_after.scriptEventReceive.subscribeInternal(({ id, message, sourceType }) => {
+system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceType }) => {
     if (sourceType !== ScriptEventSource.Server || !id.startsWith('debug:')) return
 
     HookSignal.Incoming.emit(id.substring(6), JSON.parse(message))

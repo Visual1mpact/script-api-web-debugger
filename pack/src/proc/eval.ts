@@ -4,6 +4,7 @@ import { inspectJSON } from "../lib/jsoninspector.js"
 import * as mc from '@minecraft/server'
 import * as gt from '@minecraft/server-gametest'
 import * as mcui from '@minecraft/server-ui'
+
 import run from "../wrap/run.js"
 import dynamicProperties from "../wrap/propreg.js"
 import eventListeners from "../wrap/event.js"
