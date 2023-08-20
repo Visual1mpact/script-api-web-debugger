@@ -4,7 +4,7 @@ import { uninspectFunction, uninspectJSONToElement } from "../lib/json_elm_unins
 import { getIdThrow } from "../lib/misc.js";
 import { valueBar } from "../lib/misc2.js";
 import { bedrockEvents } from "../sse.js";
-import { sendEvalThrowable } from "../util.js";
+import { sendData, sendEvalThrowable } from "../util.js";
 
 function timeBar(v: number)  {
     return valueBar(v, [255, 255, 64], [255, 64, 64], 50)
@@ -174,6 +174,7 @@ export class EventLogList {
 
 {
     const opts = getIdThrow('ev-opts')
+    const optsInspect = getIdThrow('ev-opts-inspect', HTMLInputElement)
     const optsName = getIdThrow('ev-fi-name', HTMLInputElement)
     const optsNameStyle = document.head.appendChild(element('style'))
 
@@ -195,6 +196,20 @@ export class EventLogList {
 
         const {type, value} = elm.dataset
         EventLogList.table.classList[!elm.checked ? 'add' : 'remove'](`no-${type}-${value}`)
+    })
+
+    optsInspect.checked = Boolean(init.script.states.event_inspect_enable)
+    optsInspect.addEventListener('change', async () => {
+        optsInspect.readOnly = true
+
+        try {
+            await sendData('set_state', {
+                state: 'event_inspect_enable',
+                value: optsInspect.checked
+            })
+        } finally {
+            optsInspect.readOnly = false
+        }
     })
 
     // init & sse

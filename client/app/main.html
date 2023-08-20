@@ -186,10 +186,7 @@
                         </tbody>
                     </table>
                     <div class="flex-col" style="gap: 8px">
-                        <div>
-                            <b>name</b>
-                            <input type="text" id="ev-lis-fi-name" placeholder="event name..." pattern="[a-zA-Z]+">
-                        </div>
+                        <input type="text" id="ev-lis-fi-name" placeholder="filter by event name..." pattern="[a-zA-Z]+">
                         <button id="ev-lis-clear">unlist unsubscribed</button>
                     </div>
                 </div>
@@ -214,28 +211,35 @@
                 <div style="grid-area: border; border-right: 1px solid var(--border-mid);"></div>
 
                 <!-- opts -->
-                <div id="ev-opts" style="grid-area: ev-opts; gap: 8px" class="flex align-center">
-                    <div>
-                        <b>type:</b>
+                <div style="grid-area: ev-opts; justify-content: space-between;" class="flex">
+                    <table id="ev-opts" class="space-x">
+                        <tbody>
+                            <tr>
+                                <td><b>type</b></td>
+        
+                                <td>world</td>
+                                <td><input type="checkbox" data-type="type" data-value="world" checked></td>
+                                <td>system</td>
+                                <td><input type="checkbox" data-type="type" data-value="system" checked></td>
+                            </tr>
+                            <tr>
+                                <td><b>priority</b></td>
+        
+                                <td>before</td>
+                                <td><input type="checkbox" data-type="priority" data-value="before" checked></td>
+                                <td>after</td>
+                                <td><input type="checkbox" data-type="priority" data-value="after" checked></td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                        <span>world</span>
-                        <input type="checkbox" data-type="type" data-value="world" checked>
-                        <span>system</span>
-                        <input type="checkbox" data-type="type" data-value="system" checked>
+                    <div class="flex-col" style="gap: 8px">
+                        <input type="text" id="ev-fi-name" placeholder="filter by event name..." pattern="[a-zA-Z]+">
+                        <div>
+                            <span>inspect event data</span>
+                            <input type="checkbox" id="ev-opts-inspect">
+                        </div>
                     </div>
-                    <div>
-                        <b>priority:</b>
-
-                        <span>before</span>
-                        <input type="checkbox" data-type="priority" data-value="before" checked>
-                        <span>after</span>
-                        <input type="checkbox" data-type="priority" data-value="after" checked>
-                    </div>
-
-                    <div class="gap"></div>
-
-                    <span>name</span>
-                    <input type="text" id="ev-fi-name" placeholder="event name..." pattern="[a-zA-Z]+">
                 </div>
                 <!-- log -->
                 <div style="grid-area: ev-log;" class="flow-y">

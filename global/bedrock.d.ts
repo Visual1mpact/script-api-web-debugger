@@ -174,7 +174,7 @@ declare namespace Bedrock {
 
         set_state: {
             state: string
-            value: string
+            value: T_DynamicPropertyValue
         }
 
         [k: string]: any
