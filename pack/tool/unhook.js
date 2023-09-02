@@ -9,12 +9,13 @@ dir = path.isAbsolute(dir) ? dir : path.join(process.cwd(), '..', dir)
 
 console.time('unhooked')
 
-/* ----- ----- ----- ----- */ console.log('getting pack uuid...')
+/* ----- ----- ----- ----- */ console.log('getting pack uuid & script module uuid...')
 
 // reads pack manifest & parse
 const packdata = JSON.parse(fs.readFileSync('pack/manifest.json').toString())
-// gets pack uuid & version
-const { uuid: packuuid } = packdata.header
+// gets pack uuid & script module uuid
+const { header: { uuid: packuuid }, modules } = packdata
+const muuid = modules.find(v => v.type === 'script').uuid
 
 /* ----- ----- ----- ----- */ console.log('reading server.properties...')
 
@@ -23,7 +24,7 @@ const serverProperties = fs.readFileSync(path.join(dir, 'server.properties')).to
 // gets level-name config
 const levelName = serverProperties.match(/^level-name=(.*)/m)?.[1]
 
-/* ----- ----- ----- ----- */ console.log('unlisting pack to world\'s behavior packs...')
+/* ----- ----- ----- ----- */ console.log(`unlisting pack from world's behavior packs... (pack uuid: ${packuuid})`)
 
 // directory for bds world's behavior pack list (world_behavior_packs.json)
 const packsDir = path.join(dir, 'worlds', levelName, 'world_behavior_packs.json')
@@ -35,17 +36,17 @@ const packsNew = packs.filter(v => v.pack_id !== packuuid)
 // write bds world's behavior pack list
 fs.writeFileSync(packsDir, JSON.stringify(packsNew))
 
-/* ----- ----- ----- ----- */ console.log('deleting pack to development behavior packs...')
+/* ----- ----- ----- ----- */ console.log(`deleting pack from development behavior packs... (pack uuid: ${packuuid})`)
 
 // directory for bds development behavior packs (development_behavior_packs)
 const devDir = path.join(dir, 'development_behavior_packs', packuuid)
 // remove
 fs.rmSync(devDir, { force: true, recursive: true })
 
-/* ----- ----- ----- ----- */ console.log('disallowing modules...')
+/* ----- ----- ----- ----- */ console.log(`disallowing modules... (script uuid: ${muuid})`)
 
 // diretory for bds pack configs
-const confDir = path.join(dir, 'config', packuuid)
+const confDir = path.join(dir, 'config', muuid)
 // remove
 fs.rmSync(confDir, { force: true, recursive: true })
 

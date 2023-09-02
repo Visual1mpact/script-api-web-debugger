@@ -9,12 +9,13 @@ dir = path.isAbsolute(dir) ? dir : path.join(process.cwd(), '..', dir)
 
 console.time('hooked')
 
-/* ----- ----- ----- ----- */ console.log('getting pack uuid & version...')
+/* ----- ----- ----- ----- */ console.log('getting pack uuid, version & script module uuid...')
 
 // reads pack manifest & parse
 const packdata = JSON.parse(fs.readFileSync('pack/manifest.json').toString())
-// gets pack uuid & version
-const { uuid: packuuid, version } = packdata.header
+// gets pack uuid, version & script module uuid
+const { header: { uuid: packuuid, version}, modules } = packdata
+const muuid = modules.find(v => v.type === 'script').uuid
 
 /* ----- ----- ----- ----- */ console.log('reading server.properties...')
 
@@ -23,7 +24,7 @@ const serverProperties = fs.readFileSync(path.join(dir, 'server.properties')).to
 // gets level-name config
 const levelName = serverProperties.match(/^level-name=(.*)/m)?.[1]
 
-/* ----- ----- ----- ----- */ console.log('listing pack to world\'s behavior packs...')
+/* ----- ----- ----- ----- */ console.log(`listing pack to world's behavior packs... (pack uuid ${packuuid}, version ${version.join('.')})`)
 
 // directory for bds world's behavior pack list (world_behavior_packs.json)
 const packsDir = path.join(dir, 'worlds', levelName, 'world_behavior_packs.json')
@@ -35,7 +36,7 @@ const packsNew = packs.filter(v => v.pack_id !== packuuid).concat([{ pack_id: pa
 // write bds world's behavior pack list
 fs.writeFileSync(packsDir, JSON.stringify(packsNew))
 
-/* ----- ----- ----- ----- */ console.log('adding pack to development behavior packs...')
+/* ----- ----- ----- ----- */ console.log(`adding pack to development behavior packs... (pack uuid ${packuuid})`)
 
 // directory for bds development behavior packs (development_behavior_packs)
 const devDir = path.join(dir, 'development_behavior_packs', packuuid)
@@ -45,10 +46,10 @@ fs.rmSync(devDir, { force: true, recursive: true })
 // copy pack to bds development behavior packs
 fs.cpSync('pack', devDir, { recursive: true, force: true })
 
-/* ----- ----- ----- ----- */ console.log('allowing modules...')
+/* ----- ----- ----- ----- */ console.log(`allowing modules... (script uuid: ${muuid})`)
 
 // diretory for bds pack configs
-const confDir = path.join(dir, 'config', packuuid)
+const confDir = path.join(dir, 'config', muuid)
 
 // make dir
 fs.mkdirSync(confDir, { force: true, recursive: true })
