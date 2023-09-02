@@ -146,7 +146,7 @@ eventListeners.world_after.worldInitialize.subscribeInternal(async function self
 
     HookSignal.send('property_registry', {
         world: Array.from(regWldList),
-        entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)]),
+        entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)] as [string, [string, Bedrock.T_DynamicPropertyData][]]),
         worldInitProperties: dynamicProperties.getAllWorld()
     })
 })
