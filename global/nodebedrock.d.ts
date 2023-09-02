@@ -1,50 +1,80 @@
-declare namespace NodeBedrockInterpreter {
-    interface GetData {
-        pid: number
-        killed: boolean
-        exitCode: number | null
-        signalCode: string | null
-
-        consoleLog: Bedrock.ProcessEvents['line'][]
-
-        script: {
-            consoleLog: Bedrock.Events['console'][]
-            eventLog: Bedrock.Events['event'][]
-            eventListeners: EventListenerLists<[string, EventListenerData[]][]>
-            systemRuns: SystemRunData[]
-            propertyRegistry: Bedrock.Events['property_registry']
-            worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
-            states: Record<string, Bedrock.T_DynamicPropertyValue>
+declare namespace NodeBedrock {    
+    interface Messages {
+        eval: {
+            id: string
+            script: string
+            keepOutput?: boolean
         }
+
+        buf_start: string
+        buf_write: {
+            id: string
+            chunkhex: string
+        }
+        buf_end: {
+            id: string
+            event: string
+        }
+        buf_cancel: string
+
+        set_state: {
+            state: string
+            value: Bedrock.T_DynamicPropertyValue
+        }
+
+        [k: string]: any
     }
 
-    interface EventListenerData {
-        readonly fid: number
-        readonly fn: JSONInspect.Values.Function
+    interface Events {
+        line: {
+            level: LogLevel
+            date: string
+            time: string
+            line: string
+            raw: string
+        } | {
+            level: 'unknown'
+            raw: string
+        }
 
-        readonly logs: {
-            readonly tick: number
-            readonly mode: Bedrock.Events['event_change']['mode']
-            readonly stack: string
-        }[]
+        runtime_stats: {
+            plugins: {
+                name: string,
+                handles: {
+                    type: string
+                    current: number
+                    peak: number
+                    total: number
+                }[]
+            }[]
+            runtime: {
+                memory_allocated_count: number
+                memory_allocated_size: number
+                memory_used_count: number
+                memory_used_size: number
+                atom_count: number
+                atom_size: number
+                string_count: number
+                string_size: number
+                object_count: number
+                object_size: number
+                property_count: number
+                property_size: number
+                function_count: number
+                function_size: number
+                function_code_size: number
+                function_line_count: number
+                array_count: number
+                fast_array_count: number
+                fast_array_element_count: number
+            }
+        }
 
-        disabled: boolean
-        subscribed: boolean
-    }
+        data: { [K in keyof Events]: { name: K, data: Events[K] } }[keyof Events]
 
-    type EventListenerLists<T> = Record<'world' | 'system', Record<'before' | 'after', T>>
-
-    interface SystemRunData {
-        readonly tick: number
-        readonly id: number
-
-        readonly type: Bedrock.T_RunType
-        readonly duration: number
-
-        readonly fn: JSONInspect.Values.Function
-        readonly stack: string
-
-        status: 'add' | 'suspend' | 'clear'
-        clearStack?: string
+        exit: {
+            code: number | null
+            signal: string | null
+        }
     }
 }

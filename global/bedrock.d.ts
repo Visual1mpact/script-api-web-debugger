@@ -99,85 +99,33 @@ declare namespace Bedrock {
             value: T_DynamicPropertyValue
         }
     }
-
-    interface ProcessEvents {
-        line: {
-            level: LogLevel
-            date: string
-            time: string
-            line: string
-            raw: string
-        } | {
-            level: 'unknown'
-            raw: string
+    
+    namespace Websocket {
+        interface Request<P, B> {
+            header: {
+                requestId: string,
+                messagePurpose: P,
+                version: number,
+                messageType: string
+            },
+            body: B
         }
 
-        runtime_stats: {
-            plugins: {
-                name: string,
-                handles: {
-                    type: string
-                    current: number
-                    peak: number
-                    total: number
-                }[]
-            }[]
-            runtime: {
-                memory_allocated_count: number
-                memory_allocated_size: number
-                memory_used_count: number
-                memory_used_size: number
-                atom_count: number
-                atom_size: number
-                string_count: number
-                string_size: number
-                object_count: number
-                object_size: number
-                property_count: number
-                property_size: number
-                function_count: number
-                function_size: number
-                function_code_size: number
-                function_line_count: number
-                array_count: number
-                fast_array_count: number
-                fast_array_element_count: number
+        interface Response<T extends string, B = any> {
+            readonly header: {
+                readonly messagePurpose: T;
+                readonly requestId: string;
+                readonly version: number;
             }
+            readonly body: B
         }
 
-        data: { [K in keyof Events]: { name: K, data: Events[K] } }[keyof Events]
-
-        exit: {
-            code: number | null
-            signal: string | null
-        }
-    }
-
-    interface Messages {
-        eval: {
-            id: string
-            script: string
-        }
-
-        buf_start: string
-        buf_write: {
-            id: string
-            chunkhex: string
-        }
-        buf_end: {
-            id: string
-            event: string
-        }
-        buf_cancel: string
-
-        conn_id: string
-
-        set_state: {
-            state: string
-            value: T_DynamicPropertyValue
-        }
-
-        [k: string]: any
+        type CommandResponse = Response<'commandResponse'>
+        type EventResponse = Response<'event', {
+            readonly eventName: string;
+            readonly measurements: unknown;
+            readonly properties: any;
+        }>
     }
 
     type T_DynamicPropertyData = {
