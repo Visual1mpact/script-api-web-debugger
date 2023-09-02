@@ -75,7 +75,7 @@ declare namespace NodeBedrock {
             }
         }
 
-        data: { [K in keyof Events]: { name: K, data: Events[K] } }[keyof Events]
+        data: { [K in keyof Bedrock.Events]: { name: K, data: Bedrock.Events[K] } }[keyof Bedrock.Events]
 
         exit: {
             code: number | null

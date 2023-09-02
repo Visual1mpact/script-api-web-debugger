@@ -83,7 +83,7 @@ World.prototype.setDynamicProperty = function(id, value) {
 
     wldSet.call(this, id, value)
 
-    HookSignal.Outgoing.send('property_set', {
+    HookSignal.send('property_set', {
         type: 'world',
         property: id,
         value
@@ -96,7 +96,7 @@ World.prototype.removeDynamicProperty = function(id) {
     const v = wldRm.call(this, id)
     if (!v) return false
 
-    HookSignal.Outgoing.send('property_set', {
+    HookSignal.send('property_set', {
         type: 'world',
         property: id,
         value: undefined
@@ -112,7 +112,7 @@ Entity.prototype.setDynamicProperty = function(id, value) {
 
     entSet.call(this, id, value)
 
-    HookSignal.Outgoing.send('property_set', {
+    HookSignal.send('property_set', {
         type: 'entity',
         entityId: this.id,
         entityType: this.typeId,
@@ -128,7 +128,7 @@ Entity.prototype.removeDynamicProperty = function(id) {
     const v = entRm.call(this, id)
     if (!v) return false
 
-    HookSignal.Outgoing.send('property_set', {
+    HookSignal.send('property_set', {
         type: 'entity',
         entityId: this.id,
         entityType: this.typeId,
@@ -144,7 +144,7 @@ eventListeners.world_after.worldInitialize.subscribeInternal(async function self
     await null
     eventListeners.world_after.worldInitialize.unsubscribeInternal(self)
 
-    HookSignal.Outgoing.send('property_registry', {
+    HookSignal.send('property_registry', {
         world: Array.from(regWldList),
         entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)]),
         worldInitProperties: dynamicProperties.getAllWorld()

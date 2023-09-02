@@ -59,7 +59,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
             const tSelf = Date.now() - t1
             const tTotal = Date.now() - t0
 
-            HookSignal.Outgoing.send('event', {
+            HookSignal.send('event', {
                 tick: system.currentTick,
                 name,
 
@@ -99,7 +99,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                     if (disabled === v) return
                     disabled = v
 
-                    HookSignal.Outgoing.send('event_change', {
+                    HookSignal.send('event_change', {
                         tick: system.currentTick,
                         name,
         
@@ -122,7 +122,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                 }
             })
 
-            HookSignal.Outgoing.send('event_change', {
+            HookSignal.send('event_change', {
                 tick: system.currentTick,
                 name,
 
@@ -143,7 +143,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
             if (!fid) ids.set(fn, fid = cid++)
             if (!listeners.delete(fid)) return
 
-            HookSignal.Outgoing.send('event_change', {
+            HookSignal.send('event_change', {
                 tick: system.currentTick,
                 name,
 

@@ -8,7 +8,7 @@ const states = new Proxy(stateInternal, {
         if (v !== undefined) t[p] = v
         else delete t[p]
 
-        HookSignal.Outgoing.send('state_set', {
+        HookSignal.send('state_set', {
             state: p,
             value: v
         })
@@ -19,7 +19,7 @@ const states = new Proxy(stateInternal, {
         if (typeof p === 'symbol' || !(p in t)) return true
 
         delete t[p]
-        HookSignal.Outgoing.send('state_set', {
+        HookSignal.send('state_set', {
             state: p,
             value: undefined
         })

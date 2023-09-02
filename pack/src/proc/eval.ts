@@ -1,7 +1,7 @@
 import HookSignal from "../lib/hooksig.js"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { PromiseController } from "../lib/abortctrl.js"
-import { post } from "../lib/misc.js"
+import { postJSON } from "../lib/misc.js"
 
 import * as mc from '@minecraft/server'
 import * as gt from '@minecraft/server-gametest'
@@ -25,17 +25,17 @@ async function execEval(id: string, script: string, keepOutput = true) {
         const value = (await fn.call(ectx, ectxProxy))[0]
         if (keepOutput) ectx.$_ = value
 
-        post(await evalUrl.promise, JSON.stringify({
+        postJSON(await evalUrl.promise, {
             id,
             result: inspectJSON(value),
             error: false
-        }))
+        })
     } catch(e) {
-        post(await evalUrl.promise, JSON.stringify({
+        postJSON(await evalUrl.promise, {
             id,
             result: inspectJSON(e),
             error: true
-        }))
+        })
     }
 }
 

@@ -7,7 +7,7 @@ run.internals.runInterval(() => {
     const curTime = Date.now(), delta = curTime - prevTime
     prevTime = curTime
 
-    HookSignal.Outgoing.send('tick', {
+    HookSignal.send('tick', {
         delta,
         tick: system.currentTick
     })

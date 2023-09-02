@@ -1,6 +1,6 @@
 import EventEmitter from "./event.js";
 import { ScriptEventSource, system } from '@minecraft/server'
-import { post } from "./misc.js";
+import { postJSON } from "./misc.js";
 import { PromiseController } from "./abortctrl.js";
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceType }) => {
@@ -17,7 +17,7 @@ namespace HookSignal {
     export const outgoingUrl = eventUrl.promise
 
     export async function send<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
-        post(await outgoingUrl, JSON.stringify({ name, data }))
+        postJSON(await outgoingUrl, { name, data })
     }
 }
 

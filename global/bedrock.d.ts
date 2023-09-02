@@ -69,8 +69,6 @@ declare namespace Bedrock {
             stack: string
         }
 
-        ready: void
-
         property_registry: {
             world: [property: string, data: T_DynamicPropertyData][]
             entities: [id: string, properties: [property: string, data: T_DynamicPropertyData][]][]
@@ -120,6 +118,12 @@ declare namespace Bedrock {
             readonly measurements: unknown;
             readonly properties: any;
         }>
+    }
+
+    interface EvalResult {
+        id: string,
+        result: JSONInspect.All,
+        error: boolean
     }
 
     type T_DynamicPropertyData = {
