@@ -154,7 +154,7 @@ server.post('/bedrock/event/:event',
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
 
         const name = req.params.event as any, data = req.body
-        NBedrock.events.emit('data', { name, data })
+        NBedrock.events.emit('data', data)
         NBedrock.bedrockEvents.emit(name, data)
 
         res.header('Content-Type', 'text/plain')

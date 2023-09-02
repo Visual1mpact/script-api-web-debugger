@@ -43,7 +43,7 @@ NBedrock.events.addListener('line', data => pushToLimit(NInterpreter.processCons
 NBedrock.events.addListener('data', ev => {
     switch (ev.name) {
         case 'ready': {
-            NInterpreter.processConsoleLogList = []
+            //NInterpreter.processConsoleLogList = []
             NInterpreter.consoleLogList = []
             NInterpreter.eventLogList = []
             NInterpreter.worldInitProps = []
