@@ -76,10 +76,19 @@ if %dest% == "" (
     set dest="!dest:"=!"
 )
 
+set p=%3
+if "%p%" == "" (
+    set p=7070
+    set /p p="Port (default 7070):"
+)
+
+set BDSTARGET=%dest%
+set PORT=%p%
+
 :p_start_top
 cls
 
-cmd /c node app/main.js %dest%
+cmd /c node -r "./app/main.js" -i
 
 if %errorlevel% == 99 goto p_start_top
 

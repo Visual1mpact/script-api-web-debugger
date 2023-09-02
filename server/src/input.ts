@@ -1,5 +1,5 @@
 import cp = require('child_process')
-import { keypressEvent } from "../lib/input.js"
+import { keypressEvent } from "./lib/input.js"
 import { port } from './server.js'
 
 keypressEvent.on('keypress', ({ name, ctrl }) => {
@@ -7,9 +7,6 @@ keypressEvent.on('keypress', ({ name, ctrl }) => {
     switch (name) {
         case 'r':
             process.exit(99)
-
-        case 'c':
-            process.exit(0)
     
         case 'o':
             cp.exec(`start http://localhost:${port}`)
@@ -17,7 +14,6 @@ keypressEvent.on('keypress', ({ name, ctrl }) => {
 })
 
 console.log('Input options:')
-console.log(' : Ctrl + C - Exit')
 console.log(' : Ctrl + R - Restart')
 console.log(' : Ctrl + O - Open browser')
 console.log(' ')
