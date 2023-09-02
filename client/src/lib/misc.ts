@@ -1,4 +1,15 @@
 /**
+ * Creates a new abort signal that aborts after specified time
+ * @param timeout Timeout in milliseconds
+ * @returns Abort signal
+ */
+export function abortTimeout(timeout: number) {
+    const ctrl = new AbortController()
+    setTimeout(() => ctrl.abort('Timeout reached'), timeout)
+    return ctrl.signal
+}
+
+/**
  * Assigns properties from source to object only if source's properties is in the object
  * @param a Object to be assigned
  * @param b Source
