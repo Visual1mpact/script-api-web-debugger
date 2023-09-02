@@ -4,6 +4,8 @@
     "packages": {
         "@minecraft/server": "1.4.0-beta",
         "@minecraft/server-gametest": "1.0.0-beta",
-        "@minecraft/server-ui": "1.2.0-beta"
+        "@minecraft/server-ui": "1.2.0-beta",
+        "@minecraft/server-net": "1.0.0-beta",
+        "@minecraft/server-admin": "1.0.0-beta"
     }
 }
