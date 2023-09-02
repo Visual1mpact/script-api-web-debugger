@@ -34,7 +34,7 @@ namespace NodeBedrockInst {
 
     export async function sendEval(script: string, keepOutput = true) {
         const id = crypto.randomUUID()
-        const prm = new PromiseController<JSONInspect.All>()
+        const prm = new PromiseController<Bedrock.EvalResult>()
 
         sendScriptData('eval', {
             id,
@@ -133,7 +133,7 @@ namespace NodeBedrockInst {
 export default NodeBedrockInst
 
 const evalInputPending = new Map<string, { name: any, data: string }>()
-const evalPending = new Map<string, PromiseController<JSONInspect.All>>()
+const evalPending = new Map<string, PromiseController<Bedrock.EvalResult>>()
 
 server.get('/bedrock/longdata/:id',
     (req, res) => {
@@ -149,6 +149,8 @@ server.post('/bedrock/event/:event',
     express.json({ type: 'application/json' }),
 
     (req, res) => {
+        if (req.header('content-type') !== 'application/json') return res.status(415).end()
+
         const name = req.params.event, data = req.body
         NodeBedrockInst.events.emit('data', { name, data })
         NodeBedrockInst.bedrockEvents.emit(name, data)
@@ -162,11 +164,13 @@ server.post('/bedrock/eval',
     express.json({ type: 'application/json' }),
 
     (req, res) => {
-        const { id, error, result } = req.body as Bedrock.EvalResult
-        const prm = evalPending.get(id)
+        if (req.header('content-type') !== 'application/json') return res.status(415).end()
+
+        const data = req.body as Bedrock.EvalResult
+        const prm = evalPending.get(data.id)
         if (prm) {
-            evalPending.delete(id)
-            prm[error ? 'reject' : 'resolve'](result)
+            evalPending.delete(data.id)
+            prm.resolve(data)
         }
 
         res.header('Content-Type', 'text/plain')
