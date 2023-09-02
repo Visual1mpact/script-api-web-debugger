@@ -9,9 +9,6 @@ import TypedEventEmitter from './lib/typedevm.js'
 import PromiseController from './lib/promisectrl.js'
 import { port, server } from './server.js'
 
-const evalInputPending = new Map<string, { name: any, data: string }>()
-const evalPending = new Map<string, PromiseController<JSONInspect.All>>()
-
 let { BDSTARGET: _bdsTarget = '' } = process.env
 _bdsTarget = _bdsTarget.slice(1, -1)
 const bdsTarget = path.isAbsolute(_bdsTarget) ? _bdsTarget : path.join(process.cwd(), '..', _bdsTarget)
@@ -134,6 +131,9 @@ namespace NodeBedrockInst {
     process.once('SIGINT', () => send('stop'))
 }
 export default NodeBedrockInst
+
+const evalInputPending = new Map<string, { name: any, data: string }>()
+const evalPending = new Map<string, PromiseController<JSONInspect.All>>()
 
 server.get('/bedrock/longdata/:id',
     (req, res) => {
