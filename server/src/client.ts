@@ -34,8 +34,8 @@ server.get('/client/data', (req, res) => {
                 world: worldInitProps,
                 entities: entitiesInitProps
             },
-            worldProperties: Array.from(worldProps),
-            states: Array.from(states)
+            worldProperties: worldProps,
+            states: states
         }
     }
 

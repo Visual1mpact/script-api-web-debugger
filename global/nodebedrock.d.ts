@@ -84,15 +84,19 @@ declare namespace NodeBedrock {
             eventLog: Bedrock.Events['event'][]
             systemRuns: Interpreter.SystemRun[]
             propertyRegistry: Pick<Bedrock.Events['property_registry'], 'entities' | 'world'>
-            worldProperties: [string, Bedrock.T_DynamicPropertyValue][]
-            states: [string, Bedrock.T_DynamicPropertyValue][]
+            worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
+            states: Record<string, Bedrock.T_DynamicPropertyValue>
         }
     }
 
     namespace Interpreter {
         interface EventListener extends Bedrock.FunctionIdentifier {
             lastSubscribeTick: number
-            log: [mode: 'subscribe' | 'unsubscribe' | 'disable' | 'enable', stack: string][]
+            log: {
+                tick: number
+                mode: 'subscribe' | 'unsubscribe' | 'disable' | 'enable',
+                stack: string
+            }[]
 
             disabled: boolean
             subscribed: boolean

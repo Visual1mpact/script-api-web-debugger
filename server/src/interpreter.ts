@@ -20,9 +20,9 @@ namespace NInterpreter {
 
     export let worldInitProps: [property: string, data: Bedrock.T_DynamicPropertyData][]
     export let entitiesInitProps: [id: string, properties: [property: string, data: Bedrock.T_DynamicPropertyData][]][]
-    export let worldProps = new Map<string, Bedrock.T_DynamicPropertyValue>
 
-    export let states = new Map<string, Bedrock.T_DynamicPropertyValue>()
+    export let worldProps: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
+    export let states: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
 
     export let eventListeners: Record<'world' | 'system', Record<'before' | 'after', Map<string, Map<number, NodeBedrock.Interpreter.EventListener>>>> = {
         world: { before: Object.create(null), after: Object.create(null) },
@@ -48,8 +48,8 @@ NBedrock.events.addListener('data', ev => {
             NInterpreter.eventLogList = []
             NInterpreter.worldInitProps = []
             NInterpreter.entitiesInitProps = []
-            NInterpreter.worldProps.clear()
-            NInterpreter.states.clear()
+            NInterpreter.worldProps = Object.create(null)
+            NInterpreter.states = Object.create(null)
             NInterpreter.systemRuns.clear()
             NInterpreter.eventListeners = {
                 world: { before: new Map, after: new Map },
@@ -70,17 +70,17 @@ NBedrock.events.addListener('data', ev => {
         case 'property_registry': {
             NInterpreter.worldInitProps = ev.data.world
             NInterpreter.entitiesInitProps = ev.data.entities
-            NInterpreter.worldProps = new Map(Object.entries(ev.data.worldInitProperties))
+            NInterpreter.worldProps = ev.data.worldInitProperties
         } break
 
         case 'property_set': {
             if (ev.data.type !== 'world') break
 
-            NInterpreter.worldProps.set(ev.data.property, ev.data.value)
+            NInterpreter.worldProps[ev.data.property] = ev.data.value
         } break
 
         case 'state_set': {
-            NInterpreter.states.set(ev.data.state, ev.data.value)
+            NInterpreter.states[ev.data.state] = ev.data.value
         } break
         
         case 'system_run_change': {
@@ -159,7 +159,7 @@ NBedrock.events.addListener('data', ev => {
                 }
             }
 
-            pushToLimit(data.log, [mode, stack], NInterpreterConfig.eventListenersLogLimit)
+            pushToLimit(data.log, {tick, mode, stack}, NInterpreterConfig.eventListenersLogLimit)
 
             const fsid = isSystem + '/' + isBefore + '/' + name + '/' + fid
 
