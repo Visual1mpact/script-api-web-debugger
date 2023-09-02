@@ -3,6 +3,8 @@ import { ScriptEventSource, system } from '@minecraft/server'
 import { postJSON } from "./misc.js";
 import { PromiseController } from "./abortctrl.js";
 
+const log = console.log
+
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceType }) => {
     if (sourceType !== ScriptEventSource.Server || !id.startsWith('debug:')) return
 
@@ -18,6 +20,10 @@ namespace HookSignal {
 
     export async function send<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
         postJSON(await outgoingUrl, { name, data })
+    }
+
+    export function sendConsole<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
+        log(`SCRIPTDATA:---${name}---:${JSON.stringify({ name, data })}`)
     }
 }
 

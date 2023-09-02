@@ -91,6 +91,8 @@ declare namespace Bedrock {
             value: T_DynamicPropertyValue
         }
 
+        ready: void
+
         [k: string]: any
     }
     
