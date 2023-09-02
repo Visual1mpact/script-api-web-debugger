@@ -13,7 +13,7 @@ let { BDSTARGET: _bdsTarget = '' } = process.env
 _bdsTarget = _bdsTarget.slice(1, -1)
 const bdsTarget = path.isAbsolute(_bdsTarget) ? _bdsTarget : path.join(process.cwd(), '..', _bdsTarget)
 
-namespace NodeBedrockInst {
+namespace NBedrock {
     export const bdsPath = bdsTarget
     export const childProcess = cp.spawn(bdsTarget, {
         cwd: path.resolve(path.parse(bdsTarget).dir),
@@ -80,10 +80,10 @@ namespace NodeBedrockInst {
 
                 // special case: ready
                 if (name === 'ready')
-                    NodeBedrockInst.sendScriptData('handshake', port)
+                    NBedrock.sendScriptData('handshake', port)
 
-                NodeBedrockInst.events.emit('data', { name, data })
-                NodeBedrockInst.bedrockEvents.emit(name, data)
+                NBedrock.events.emit('data', { name, data })
+                NBedrock.bedrockEvents.emit(name, data)
             }
 
             // script event send
@@ -104,7 +104,7 @@ namespace NodeBedrockInst {
 
             // bedrock normal line
             else  {
-                NodeBedrockInst.events.emit('line', {
+                NBedrock.events.emit('line', {
                     level: logLevelEnum[level] ?? 'log',
                     date,
                     time,
@@ -115,7 +115,7 @@ namespace NodeBedrockInst {
         }
         // unknown
         else if (raw) {
-            NodeBedrockInst.events.emit('line', {
+            NBedrock.events.emit('line', {
                 level: 'unknown',
                 raw
             })
@@ -130,7 +130,7 @@ namespace NodeBedrockInst {
     process.once('exit', () => send('stop'))
     process.once('SIGINT', () => send('stop'))
 }
-export default NodeBedrockInst
+export default NBedrock
 
 const evalInputPending = new Map<string, { name: any, data: string }>()
 const evalPending = new Map<string, PromiseController<Bedrock.EvalResult>>()
@@ -152,8 +152,8 @@ server.post('/bedrock/event/:event',
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
 
         const name = req.params.event, data = req.body
-        NodeBedrockInst.events.emit('data', { name, data })
-        NodeBedrockInst.bedrockEvents.emit(name, data)
+        NBedrock.events.emit('data', { name, data })
+        NBedrock.bedrockEvents.emit(name, data)
 
         res.header('Content-Type', 'text/plain')
         res.end()

@@ -1,5 +1,5 @@
 import Color from "./lib/color.js";
-import NodeBedrockInst from "./bedrock.js";
+import NBedrock from "./bedrock.js";
 
 const levelsFlag = {
     debug: Color.color('strong_black') + '[D]' + Color.format('reset'),
@@ -10,7 +10,7 @@ const levelsFlag = {
     unknown: '[U]'
 }
 
-NodeBedrockInst.events.on('line', data => {
+NBedrock.events.on('line', data => {
     if (data.level === 'unknown') {
         console.log(levelsFlag.unknown, data.raw)
     } else {
@@ -19,6 +19,6 @@ NodeBedrockInst.events.on('line', data => {
     }
 })
 
-NodeBedrockInst.events.once('exit', ({ code, signal }) => {
+NBedrock.events.once('exit', ({ code, signal }) => {
     console.log(`bedrock process exited with code ${code ?? '-'} (signal: ${signal ?? '-'})`)
 })
