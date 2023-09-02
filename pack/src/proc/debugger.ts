@@ -9,7 +9,7 @@ const log = console.log
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceType }) => {
     if (sourceType !== ScriptEventSource.Server || !id.startsWith('debug:')) return
 
-    Debugger.incoming.emit(id.substring(6), JSON.parse(message))
+    Debugger.incoming.emit(id.substring(6) as any, JSON.parse(message))
 })
 
 const eventUrl = new PromiseController<number>()

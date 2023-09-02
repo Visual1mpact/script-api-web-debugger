@@ -1,58 +1,51 @@
 declare namespace Bedrock {
+    interface EventIdentifier {
+        name: string
+        isBefore: boolean
+        isSystem: boolean
+    }
+
+    interface FunctionIdentifier {
+        fn: JSONInspect.Values.Function
+        fid: number
+    }
+
+    interface FunctionIdentifierStacked extends FunctionIdentifier {
+        stack: string
+    }
+
     interface Events {
-        event_change: {
+        event_change: EventIdentifier & FunctionIdentifierStacked & {
             tick: number
-
-            name: string
-            isBefore: boolean
-            isSystem: boolean
-
-            fn: JSONInspect.Values.Function
-            fid: number
-            stack: string
-
             mode: 'subscribe' | 'unsubscribe' | 'disable' | 'enable'
         }
-        event: {
+        event: EventIdentifier & {
             tick: number
-
-            name: string
-            isBefore: boolean
-            isSystem: boolean
 
             data: JSONInspect.All
             timing: {
-                functions: {
-                    fn: JSONInspect.Values.Function
-                    fid: number
+                functions: Array<FunctionIdentifier & {
                     time: number
                     error?: JSONInspect.All
-                }[]
+                }>
                 self: number
                 total: number
             }
         }
 
-        system_run_change: {
+        system_run_change: FunctionIdentifierStacked & {
             tick: number
 
             type: T_RunType
             duration: number
             id: number
 
-            fn: JSONInspect.Values.Function
-            fid: number
-            stack: string
-
             mode: 'add' | 'clear' | 'suspend' | 'resume'
         }
-        system_run: {
+        system_run: FunctionIdentifier & {
             tick: number
 
             id: number
-
-            fn: JSONInspect.Values.Function
-            fid: number
             
             delta: number
             error?: JSONInspect.All
@@ -93,7 +86,7 @@ declare namespace Bedrock {
 
         ready: void
 
-        [k: string]: any
+        //[k: string]: any
     }
     
     interface EvalResult {

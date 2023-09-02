@@ -13,8 +13,6 @@ declare namespace NodeBedrock {
 
         handshake: number
         longdata: string
-
-        [k: string]: any
     }
 
     interface Events {
@@ -68,7 +66,30 @@ declare namespace NodeBedrock {
             code: number | null
             signal: string | null
         }
+    }
 
-        [k: string]: any
+    namespace Interpreter {
+        interface EventListener extends Bedrock.FunctionIdentifier {
+            lastSubscribeTick: number
+            log: [mode: 'subscribe' | 'unsubscribe' | 'disable' | 'enable', stack: string][]
+
+            disabled: boolean
+            subscribed: boolean
+        }
+
+        interface SystemRun extends Bedrock.FunctionIdentifier {
+            addTick: number
+            addStack: string
+
+            clearTick?: number
+            clearStack?: string
+
+            type: Bedrock.T_RunType
+            duration: number
+            id: number
+
+            isCleared: boolean
+            isSuspended: boolean
+        }
     }
 }

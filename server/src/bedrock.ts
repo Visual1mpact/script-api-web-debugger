@@ -53,6 +53,7 @@ namespace NBedrock {
         if (buf.length < 2048) send(`scriptevent debug:${name} ${str}`)
         else {
             const id = crypto.randomUUID()
+            //@ts-ignore
             evalInputPending.set(id, { name, data })
             send(`scriptevent debug:longdata ${JSON.stringify(id)}`)
         }
@@ -82,8 +83,9 @@ namespace NBedrock {
                 if (name === 'ready')
                     NBedrock.sendScriptData('handshake', port)
 
+                //@ts-ignore
                 NBedrock.events.emit('data', { name, data })
-                NBedrock.bedrockEvents.emit(name, data)
+                NBedrock.bedrockEvents.emit(name as any, data)
             }
 
             // script event send
@@ -151,7 +153,7 @@ server.post('/bedrock/event/:event',
     (req, res) => {
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
 
-        const name = req.params.event, data = req.body
+        const name = req.params.event as any, data = req.body
         NBedrock.events.emit('data', { name, data })
         NBedrock.bedrockEvents.emit(name, data)
 
