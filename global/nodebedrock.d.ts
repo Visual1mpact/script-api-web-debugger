@@ -22,6 +22,11 @@ declare namespace NodeBedrock {
             value: Bedrock.T_DynamicPropertyValue
         }
 
+        handshake: {
+            evalUrl: string
+            eventUrl: string
+        }
+
         [k: string]: any
     }
 

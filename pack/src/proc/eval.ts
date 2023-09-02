@@ -1,9 +1,13 @@
 import HookSignal from "../lib/hooksig.js"
 import { inspectJSON } from "../lib/jsoninspector.js"
+import { PromiseController } from "../lib/abortctrl.js"
+import { post } from "../lib/misc.js"
 
 import * as mc from '@minecraft/server'
 import * as gt from '@minecraft/server-gametest'
 import * as mcui from '@minecraft/server-ui'
+import * as mcnet from '@minecraft/server-net'
+import * as mcadmin from '@minecraft/server-admin'
 
 import run from "../wrap/run.js"
 import dynamicProperties from "../wrap/propreg.js"
@@ -11,26 +15,27 @@ import eventListeners from "../wrap/event.js"
 import states from "./state.js"
 
 const asyncConstructor = (async() => {}).constructor as Function
+const evalUrl = new PromiseController<string>()
 
-async function execEval(id: string, script: string) {
+async function execEval(id: string, script: string, keepOutput = true) {
     try {
         const fn = asyncConstructor('c', `await null; with (c) return [eval(${JSON.stringify(script)})]`)
         Object.defineProperty(fn, 'name', { value: `debuggerEvalExec`})
 
         const value = (await fn.call(ectx, ectxProxy))[0]
-        ectx.$_ = value
+        if (keepOutput) ectx.$_ = value
 
-        HookSignal.Outgoing.send('eval', {
+        post(await evalUrl.promise, JSON.stringify({
             id,
             result: inspectJSON(value),
             error: false
-        })
+        }))
     } catch(e) {
-        HookSignal.Outgoing.send('eval', {
+        post(await evalUrl.promise, JSON.stringify({
             id,
             result: inspectJSON(e),
             error: true
-        })
+        }))
     }
 }
 
@@ -38,6 +43,8 @@ const ectxScopables: any = {
     mc,
     gt,
     mcui,
+    mcnet,
+    mcadmin
 }
 
 const ectx: any = {
@@ -78,4 +85,5 @@ const ectxProxy = new Proxy(ectx, {
     has: (t, p) => true
 })
 
-HookSignal.Incoming.addEventListener('eval', ({id, script}) => execEval(id, script))
+HookSignal.incoming.addEventListener('eval', ({ id, script, keepOutput }) => execEval(id, script, keepOutput))
+HookSignal.incoming.addEventListener('handshake', d => evalUrl.resolve(d.evalUrl), { once: true })

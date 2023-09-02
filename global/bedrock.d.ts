@@ -63,12 +63,6 @@ declare namespace Bedrock {
             delta: number
         }
 
-        eval: {
-            id: string
-            result: JSONInspect.All
-            error: boolean
-        }
-
         console: {
             level: LogLevel
             content: JSONInspect.All[]

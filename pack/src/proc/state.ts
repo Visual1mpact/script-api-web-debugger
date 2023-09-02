@@ -28,6 +28,6 @@ const states = new Proxy(stateInternal, {
     }
 })
 
-HookSignal.Incoming.addEventListener('set_state', ({ state, value }) => states[state] = value)
+HookSignal.incoming.addEventListener('set_state', ({ state, value }) => states[state] = value)
 
 export default states
