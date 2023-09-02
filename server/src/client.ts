@@ -68,12 +68,15 @@ server.post('/client/kill', (req, res) => {
 })
 
 server.post('/client/send_eval',
-    express.text({ type: () => true }),
+    express.json({ type: 'application/json' }),
     
     async (req, res) => {
+        if (req.header('content-type') !== 'application/json') return res.status(415).end()
+
+        const { script, keepOutput } = req.body
         res.status(200)
 
-        const data = await NBedrock.sendEval(req.body)
+        const data = await NBedrock.sendEval(script, keepOutput)
         res.send(data).end()
     }
 )
