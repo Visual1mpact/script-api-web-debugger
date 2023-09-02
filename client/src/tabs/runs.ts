@@ -32,7 +32,7 @@ export abstract class RunList {
         this.list.get(ev.id)?.tick(ev.tick, ev.delta, ev.error)
     }
 
-    constructor(id: number, type: RunType, duration: number, fn: JSONInspect.Values.Function, addStack = '') {
+    constructor(id: number, type: RunType, duration: number, fn: JSONInspect.Values.Function, addStack = '---', addTick = '---') {
         this.id = id
         this.type = type
         this.duration = duration
@@ -67,14 +67,14 @@ export abstract class RunList {
             element('div', {
                 styles: { 'grid-area': 'add' },
                 childrens: [
-                    element('div', 'add stack'),
+                    element('div', [ 'add stack (tick ', this.#elm_detail_addtick = createText(addTick), ')' ]),
                     this.#elm_detail_addstack = createText(addStack)
                 ]
             }),
             element('div', {
                 styles: { 'grid-area': 'clear' },
                 childrens: [
-                    element('div', 'clear stack'),
+                    element('div', [ 'clear stack (tick ', this.#elm_detail_cleartick = createText('-'), ')' ]),
                     this.#elm_detail_clearstack = createText('-')
                 ]
             }),
@@ -118,7 +118,9 @@ export abstract class RunList {
 
     readonly detailRow: HTMLTableRowElement
     readonly detailCnt: HTMLDivElement
+    #elm_detail_addtick
     #elm_detail_addstack
+    #elm_detail_cleartick
     #elm_detail_clearstack
     #elm_detail_act_list
     #elm_detail_act_suspend
@@ -126,8 +128,14 @@ export abstract class RunList {
     #suspended = false
     #cleared = false
 
+    get addTick() { return this.#elm_detail_addtick.textContent }
+    set addTick(v) { this.#elm_detail_addtick.textContent = v }
+
     get addStack() { return this.#elm_detail_addstack.textContent }
     set addStack(v) { this.#elm_detail_addstack.textContent = v }
+
+    get clearTick() { return this.#elm_detail_cleartick.textContent }
+    set clearTick(v) { this.#elm_detail_cleartick.textContent = v }
 
     get clearStack() { return this.#elm_detail_clearstack.textContent }
     set clearStack(v) { this.#elm_detail_clearstack.textContent = v }
@@ -173,11 +181,12 @@ export abstract class RunList {
         return true
     }
 
-    clear(stack?: string) {
+    clear(stack?: string, tick?: string) {
         if (this.cleared) return false
 
         this.cleared = true
         if (stack) this.clearStack = stack
+        if (tick) this.clearTick = tick
 
         return true
     }
@@ -232,8 +241,8 @@ export abstract class RunList {
 }
 
 export class RunTimeoutList extends RunList {
-    constructor(id: number, type: 'run' | 'runTimeout', duration: number, fn: JSONInspect.Values.Function, addStack = '') {
-        super(id, type, duration, fn, addStack)
+    constructor(id: number, type: 'run' | 'runTimeout', duration: number, fn: JSONInspect.Values.Function, addStack = '', addTick = '---') {
+        super(id, type, duration, fn, addStack, addTick)
 
         this.detailCnt.append(
             element('div', {
@@ -266,8 +275,8 @@ export class RunTimeoutList extends RunList {
 }
 
 export class RunIntervalList extends RunList {
-    constructor(id: number, type: 'runInterval', duration: number, fn: JSONInspect.Values.Function, addStack = '') {
-        super(id, type, duration, fn, addStack)
+    constructor(id: number, type: 'runInterval', duration: number, fn: JSONInspect.Values.Function, addStack = '', addTick = '---') {
+        super(id, type, duration, fn, addStack, addTick)
 
         const etable = createTable({
             styles: { 'grid-area': '1 / 1 / 1 / 1' },
@@ -439,11 +448,13 @@ function handleRunChange(ev: Bedrock.Events['system_run_change']) {
 
     // init & sse
 
-    for (const { id, duration, fn, stack, status, type, clearStack } of init.script.systemRuns) {
-        const data = type === 'runInterval' ? new RunIntervalList(id, type, duration, fn, stack) : new RunTimeoutList(id, type, duration, fn, stack)
+    for (const { id, duration, fn, addTick, addStack, type, clearTick, clearStack, isCleared, isSuspended } of init.script.systemRuns) {
+        const data = type === 'runInterval'
+            ? new RunIntervalList(id, type, duration, fn, addStack, addTick + '')
+            : new RunTimeoutList(id, type, duration, fn, addStack, addTick + '')
 
-        if (status === 'clear') data.clear(clearStack)
-        if (status === 'suspend') data.suspended = true
+        if (isCleared) data.clear(clearStack, clearTick + '')
+        if (isSuspended) data.suspended = true
     }
 
     bedrockEvents.addEventListener('system_run_change', async ({ detail: data }) => handleRunChange(data))

@@ -1,10 +1,10 @@
 import TypedEventTarget from "./lib/typedevm.js"
 
 export const sse = new EventSource('/listen')
-export const sseEvents = new TypedEventTarget<Bedrock.ProcessEvents>()
+export const sseEvents = new TypedEventTarget<NodeBedrock.Events>()
 export const bedrockEvents = new TypedEventTarget<Bedrock.Events>()
 
-for (const ev of ['line', 'runtime_stats', 'data', 'exit'] as (keyof Bedrock.ProcessEvents)[])
+for (const ev of ['line', 'runtime_stats', 'data', 'exit'] as (keyof NodeBedrock.Events)[])
     sse.addEventListener(ev, ({data: str}) => {
         const data = JSON.parse(str)
 

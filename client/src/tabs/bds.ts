@@ -16,7 +16,7 @@ export class BDSList {
         error: 'lightcoral'
     }
 
-    static handle(data: Bedrock.ProcessEvents['line']) {
+    static handle(data: NodeBedrock.Events['line']) {
         return new this(data.level, data.level === 'unknown' ? data.raw : data.line)
     }
     
@@ -77,7 +77,7 @@ const stats = {
 const kill = getIdThrow('bds-signal-kill', HTMLButtonElement)
 
 function sendInput(value: string) {
-    fetchThrow('/send', {
+    fetchThrow('/client/send', {
         method: 'POST',
         body: value
     })
@@ -94,7 +94,7 @@ send.addEventListener('click', () => {
 })
 
 kill.addEventListener('click', () => {
-    fetchThrow('/kill', { method: 'POST' })
+    fetchThrow('/client/kill', { method: 'POST' })
 })
 
 getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
@@ -110,10 +110,10 @@ getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
 
 // data
 
-stats.pid.textContent = init.pid + ''
-stats.status.textContent = init.signalCode ? 'killed' : init.exitCode !== null ? 'stopped' : 'running'
-stats.kc.textContent = init.exitCode + '' || '-'
-stats.ks.textContent = init.signalCode ?? '-'
+stats.pid.textContent = init.bedrock.pid + ''
+stats.status.textContent = init.bedrock.signalCode ? 'killed' : init.bedrock.exitCode !== null ? 'stopped' : 'running'
+stats.kc.textContent = init.bedrock.exitCode + '' || '-'
+stats.ks.textContent = init.bedrock.signalCode ?? '-'
 
 for (const d of init.consoleLog) BDSList.handle(d)
 

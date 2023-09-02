@@ -8,8 +8,8 @@ const tab = getIdThrow('tab-stats')
 {
     const runtimeLabels: string[] = []
 
-    type RuntimeCountKeys = keyof Bedrock.ProcessEvents['runtime_stats']['runtime'] extends infer R ? R extends `${infer V}_count` ? V : never : never
-    type RuntimeSizeKeys = keyof Bedrock.ProcessEvents['runtime_stats']['runtime'] extends infer R ? R extends `${infer V}_size` ? V : never : never
+    type RuntimeCountKeys = keyof NodeBedrock.Events['runtime_stats']['runtime'] extends infer R ? R extends `${infer V}_count` ? V : never : never
+    type RuntimeSizeKeys = keyof NodeBedrock.Events['runtime_stats']['runtime'] extends infer R ? R extends `${infer V}_size` ? V : never : never
 
     const countSets: Record<RuntimeCountKeys, ChartDataset<'line'>> = {
         memory_allocated: {

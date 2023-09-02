@@ -1,12 +1,12 @@
 import { fetchThrow } from "./lib/misc.js";
 
 export async function sendEval(script: string) {
-    const res = await fetchThrow('/sendeval', {
+    const res = await fetchThrow('/client/send_eval', {
         method: 'POST',
         body: script
     })
 
-    return await res.json() as Bedrock.Events['eval']
+    return await res.json() as Bedrock.EvalResult
 }
 
 export async function sendEvalThrowable(script: string) {
@@ -15,8 +15,8 @@ export async function sendEvalThrowable(script: string) {
     return res
 }
 
-export function sendData<K extends keyof Bedrock.Messages>(name: K, data: Bedrock.Messages[K]) {
-    return fetchThrow('/senddata/' + name, {
+export function sendData<K extends keyof NodeBedrock.Messages>(name: K, data: NodeBedrock.Messages[K]) {
+    return fetchThrow('/client/send_data/' + name, {
         method: 'POST',
         body: JSON.stringify(data)
     })

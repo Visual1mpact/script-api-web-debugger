@@ -465,14 +465,14 @@ export class EventListeners {
 
     // init & sse
 
-    function initRun(data: [string, NodeBedrockInterpreter.EventListenerData[]][], system: boolean, before: boolean) {
+    function initRun(data: [string, NodeBedrock.Interpreter.EventListener[]][], system: boolean, before: boolean) {
         for (const [id, listeners] of data) {
             for (const data of listeners) {
                 const listener = new EventListeners(system, before, id, data.fid, data.fn)
                 if (data.disabled) listener.disabled = true
                 if (!data.subscribed) listener.subscribed = false
 
-                for (const log of data.logs) listener.writeLog(log.tick, log.mode, log.stack)
+                for (const log of data.log) listener.writeLog(log.tick, log.mode, log.stack)
             }
         }
     }

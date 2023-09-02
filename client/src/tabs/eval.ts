@@ -1,6 +1,7 @@
 import { element } from "../lib/element.js";
 import { uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
-import { fetchThrow, getIdThrow } from "../lib/misc.js";
+import { getIdThrow } from "../lib/misc.js";
+import { sendEval } from "../util.js";
 
 const list = getIdThrow('eval-list')
 const input = getIdThrow('eval-input', HTMLTextAreaElement)
@@ -61,11 +62,7 @@ export async function sendInput(value: string) {
     list.append(elm)
 
     try {
-        const res = await fetchThrow('/sendeval', {
-            method: 'POST',
-            body: value
-        })
-        const data: Bedrock.Events['eval'] = await res.json()
+        const data = await sendEval(value)
 
         retElm.style.color = data.error ? 'lightcoral' : 'lime'
         resElm.append(uninspectJSONToElement(data.result))
