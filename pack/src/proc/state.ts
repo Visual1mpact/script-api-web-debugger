@@ -1,4 +1,4 @@
-import HookSignal from "../lib/hooksig.js"
+import Debugger from "./debugger.js"
 
 const stateInternal: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
 const states = new Proxy(stateInternal, {
@@ -8,7 +8,7 @@ const states = new Proxy(stateInternal, {
         if (v !== undefined) t[p] = v
         else delete t[p]
 
-        HookSignal.send('state_set', {
+        Debugger.send('state_set', {
             state: p,
             value: v
         })
@@ -19,7 +19,7 @@ const states = new Proxy(stateInternal, {
         if (typeof p === 'symbol' || !(p in t)) return true
 
         delete t[p]
-        HookSignal.send('state_set', {
+        Debugger.send('state_set', {
             state: p,
             value: undefined
         })
@@ -28,6 +28,6 @@ const states = new Proxy(stateInternal, {
     }
 })
 
-HookSignal.incoming.addEventListener('set_state', ({ state, value }) => states[state] = value)
+Debugger.incoming.addEventListener('set_state', ({ state, value }) => states[state] = value)
 
 export default states

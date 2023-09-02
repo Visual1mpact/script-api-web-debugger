@@ -96,34 +96,6 @@ declare namespace Bedrock {
         [k: string]: any
     }
     
-    namespace Websocket {
-        interface Request<P, B> {
-            header: {
-                requestId: string,
-                messagePurpose: P,
-                version: number,
-                messageType: string
-            },
-            body: B
-        }
-
-        interface Response<T extends string, B = any> {
-            readonly header: {
-                readonly messagePurpose: T;
-                readonly requestId: string;
-                readonly version: number;
-            }
-            readonly body: B
-        }
-
-        type CommandResponse = Response<'commandResponse'>
-        type EventResponse = Response<'event', {
-            readonly eventName: string;
-            readonly measurements: unknown;
-            readonly properties: any;
-        }>
-    }
-
     interface EvalResult {
         id: string,
         result: JSONInspect.All,

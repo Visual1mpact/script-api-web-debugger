@@ -10,5 +10,5 @@ import './wrap/console.js'
 
 import './drop.js'
 
-import HookSignal from './lib/hooksig.js'
-HookSignal.sendConsole('ready', undefined)
+import Debugger from './proc/debugger.js'
+Debugger.sendConsole('ready', undefined)

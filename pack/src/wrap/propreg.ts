@@ -1,5 +1,5 @@
 import { DynamicPropertiesDefinition, Entity, PropertyRegistry, world, World } from "@minecraft/server";
-import HookSignal from "../lib/hooksig.js";
+import Debugger from "../proc/debugger.js";
 import eventListeners from "./event.js";
 
 const defList = new WeakMap<DynamicPropertiesDefinition, Map<string, Bedrock.T_DynamicPropertyData>>()
@@ -83,7 +83,7 @@ World.prototype.setDynamicProperty = function(id, value) {
 
     wldSet.call(this, id, value)
 
-    HookSignal.send('property_set', {
+    Debugger.send('property_set', {
         type: 'world',
         property: id,
         value
@@ -96,7 +96,7 @@ World.prototype.removeDynamicProperty = function(id) {
     const v = wldRm.call(this, id)
     if (!v) return false
 
-    HookSignal.send('property_set', {
+    Debugger.send('property_set', {
         type: 'world',
         property: id,
         value: undefined
@@ -112,7 +112,7 @@ Entity.prototype.setDynamicProperty = function(id, value) {
 
     entSet.call(this, id, value)
 
-    HookSignal.send('property_set', {
+    Debugger.send('property_set', {
         type: 'entity',
         entityId: this.id,
         entityType: this.typeId,
@@ -128,7 +128,7 @@ Entity.prototype.removeDynamicProperty = function(id) {
     const v = entRm.call(this, id)
     if (!v) return false
 
-    HookSignal.send('property_set', {
+    Debugger.send('property_set', {
         type: 'entity',
         entityId: this.id,
         entityType: this.typeId,
@@ -144,7 +144,7 @@ eventListeners.world_after.worldInitialize.subscribeInternal(async function self
     await null
     eventListeners.world_after.worldInitialize.unsubscribeInternal(self)
 
-    HookSignal.send('property_registry', {
+    Debugger.send('property_registry', {
         world: Array.from(regWldList),
         entities: Array.from(regEntList, ([k, v]) => [k, Array.from(v)] as [string, [string, Bedrock.T_DynamicPropertyData][]]),
         worldInitProperties: dynamicProperties.getAllWorld()

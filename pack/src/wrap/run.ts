@@ -1,7 +1,7 @@
 import { System, system } from "@minecraft/server"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { getStackTrace } from "../lib/misc.js"
-import HookSignal from "../lib/hooksig.js"
+import Debugger from "../proc/debugger.js"
 
 let cid = 1
 const ids = new WeakMap<(ev: any) => void, number>()
@@ -25,7 +25,7 @@ const clr = System.prototype.clearRun = (id) => {
     if (!d) return
 
     runList.delete(id)
-    HookSignal.send('system_run_change', {
+    Debugger.send('system_run_change', {
         tick: system.currentTick,
 
         id,
@@ -58,7 +58,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
                 fn()
 
                 const delta = Date.now() - t
-                HookSignal.send('system_run', {
+                Debugger.send('system_run', {
                     tick: system.currentTick,
 
                     id,
@@ -70,7 +70,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
                 })
             } catch(e) {
                 const delta = Date.now() - t
-                HookSignal.send('system_run', {
+                Debugger.send('system_run', {
                     tick: system.currentTick,
 
                     id,
@@ -97,7 +97,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
                 if (state_suspended === v) return
                 state_suspended = v
 
-                HookSignal.send('system_run_change', {
+                Debugger.send('system_run_change', {
                     tick: system.currentTick,
         
                     type: k,
@@ -120,7 +120,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
             }
         })
 
-        HookSignal.send('system_run_change', {
+        Debugger.send('system_run_change', {
             tick: system.currentTick,
 
             type: k,

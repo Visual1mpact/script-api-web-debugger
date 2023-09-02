@@ -1,7 +1,7 @@
 import { world, system } from '@minecraft/server'
 import { getStackTrace } from '../lib/misc.js'
 import { inspectJSON } from '../lib/jsoninspector.js'
-import HookSignal from '../lib/hooksig.js'
+import Debugger from '../proc/debugger.js'
 import states from '../proc/state.js'
 
 states.event_inspect_enable = false
@@ -59,7 +59,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
             const tSelf = Date.now() - t1
             const tTotal = Date.now() - t0
 
-            HookSignal.send('event', {
+            Debugger.send('event', {
                 tick: system.currentTick,
                 name,
 
@@ -99,7 +99,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                     if (disabled === v) return
                     disabled = v
 
-                    HookSignal.send('event_change', {
+                    Debugger.send('event_change', {
                         tick: system.currentTick,
                         name,
         
@@ -122,7 +122,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                 }
             })
 
-            HookSignal.send('event_change', {
+            Debugger.send('event_change', {
                 tick: system.currentTick,
                 name,
 
@@ -143,7 +143,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
             if (!fid) ids.set(fn, fid = cid++)
             if (!listeners.delete(fid)) return
 
-            HookSignal.send('event_change', {
+            Debugger.send('event_change', {
                 tick: system.currentTick,
                 name,
 

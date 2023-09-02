@@ -1,4 +1,4 @@
-import HookSignal from "../lib/hooksig.js"
+import Debugger from "./debugger.js"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { PromiseController } from "../lib/abortctrl.js"
 import { postJSON } from "../lib/misc.js"
@@ -85,5 +85,5 @@ const ectxProxy = new Proxy(ectx, {
     has: (t, p) => true
 })
 
-HookSignal.incoming.addEventListener('eval', ({ id, script, keepOutput }) => execEval(id, script, keepOutput))
-HookSignal.incoming.addEventListener('handshake', port => evalUrl.resolve(`http://127.0.0.1:${port}/bedrock/eval`), { once: true })
+Debugger.incoming.addEventListener('eval', ({ id, script, keepOutput }) => execEval(id, script, keepOutput))
+Debugger.incoming.addEventListener('handshake', port => evalUrl.resolve(`http://127.0.0.1:${port}/bedrock/eval`), { once: true })
