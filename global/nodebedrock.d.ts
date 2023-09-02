@@ -6,26 +6,13 @@ declare namespace NodeBedrock {
             keepOutput?: boolean
         }
 
-        buf_start: string
-        buf_write: {
-            id: string
-            chunkhex: string
-        }
-        buf_end: {
-            id: string
-            event: string
-        }
-        buf_cancel: string
-
         set_state: {
             state: string
             value: Bedrock.T_DynamicPropertyValue
         }
 
-        handshake: {
-            evalUrl: string
-            eventUrl: string
-        }
+        handshake: number
+        longdata: string
 
         [k: string]: any
     }

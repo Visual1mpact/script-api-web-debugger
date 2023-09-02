@@ -1,6 +1,5 @@
 import './proc/eval.js'
 import './proc/tick.js'
-import './proc/buffer.js'
 import './proc/test.js'
 
 import './wrap/propreg.js'

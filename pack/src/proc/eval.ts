@@ -86,4 +86,4 @@ const ectxProxy = new Proxy(ectx, {
 })
 
 HookSignal.incoming.addEventListener('eval', ({ id, script, keepOutput }) => execEval(id, script, keepOutput))
-HookSignal.incoming.addEventListener('handshake', d => evalUrl.resolve(d.evalUrl), { once: true })
+HookSignal.incoming.addEventListener('handshake', port => evalUrl.resolve(`http://127.0.0.1:${port}/bedrock/eval`), { once: true })
