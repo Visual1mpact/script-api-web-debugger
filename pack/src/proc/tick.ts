@@ -1,5 +1,5 @@
 import { system } from "@minecraft/server"
-import Debugger from "./debugger.js"
+import Debugger from "../lib/debugger.js"
 import run from "../wrap/run.js"
 
 let prevTime = Date.now()

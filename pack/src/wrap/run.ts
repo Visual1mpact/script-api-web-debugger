@@ -1,7 +1,7 @@
 import { System, system } from "@minecraft/server"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { getStackTrace } from "../lib/misc.js"
-import Debugger from "../proc/debugger.js"
+import Debugger from "../lib/debugger.js"
 
 let cid = 1
 const ids = new WeakMap<(ev: any) => void, number>()

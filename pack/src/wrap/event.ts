@@ -1,7 +1,7 @@
 import { world, system } from '@minecraft/server'
 import { getStackTrace } from '../lib/misc.js'
 import { inspectJSON } from '../lib/jsoninspector.js'
-import Debugger from '../proc/debugger.js'
+import Debugger from '../lib/debugger.js'
 import states from '../proc/state.js'
 
 states.event_inspect_enable = false

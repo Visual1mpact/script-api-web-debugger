@@ -1,4 +1,4 @@
-import Debugger from "./debugger.js"
+import Debugger from "../lib/debugger.js"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { PromiseController } from "../lib/abortctrl.js"
 import { postJSON } from "../lib/misc.js"

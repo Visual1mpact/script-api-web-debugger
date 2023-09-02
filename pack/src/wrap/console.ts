@@ -1,4 +1,4 @@
-import Debugger from "../proc/debugger.js"
+import Debugger from "../lib/debugger.js"
 import { inspectJSON } from "../lib/jsoninspector.js"
 import { getStackTrace } from "../lib/misc.js"
 

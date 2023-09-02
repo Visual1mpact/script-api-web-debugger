@@ -1,5 +1,5 @@
 import { DynamicPropertiesDefinition, Entity, PropertyRegistry, world, World } from "@minecraft/server";
-import Debugger from "../proc/debugger.js";
+import Debugger from "../lib/debugger.js";
 import eventListeners from "./event.js";
 
 const defList = new WeakMap<DynamicPropertiesDefinition, Map<string, Bedrock.T_DynamicPropertyData>>()

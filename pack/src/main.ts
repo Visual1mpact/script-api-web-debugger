@@ -10,5 +10,5 @@ import './wrap/console.js'
 
 import './drop.js'
 
-import Debugger from './proc/debugger.js'
+import Debugger from './lib/debugger.js'
 Debugger.sendConsole('ready', undefined)

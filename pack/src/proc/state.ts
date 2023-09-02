@@ -1,4 +1,4 @@
-import Debugger from "./debugger.js"
+import Debugger from "../lib/debugger.js"
 
 const stateInternal: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
 const states = new Proxy(stateInternal, {

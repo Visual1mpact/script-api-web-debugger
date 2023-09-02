@@ -1,7 +1,7 @@
-import EventEmitter from "../lib/event.js";
+import EventEmitter from "./event.js";
 import { ScriptEventSource, system } from '@minecraft/server'
-import { postJSON } from "../lib/misc.js";
-import { PromiseController } from "../lib/abortctrl.js";
+import { postJSON } from "./misc.js";
+import { PromiseController } from "./abortctrl.js";
 import { http } from "@minecraft/server-net";
 
 const log = console.log
