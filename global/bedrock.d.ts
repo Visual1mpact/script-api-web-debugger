@@ -90,6 +90,8 @@ declare namespace Bedrock {
             state: string
             value: T_DynamicPropertyValue
         }
+
+        [k: string]: any
     }
     
     namespace Websocket {

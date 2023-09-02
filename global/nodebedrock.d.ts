@@ -81,5 +81,7 @@ declare namespace NodeBedrock {
             code: number | null
             signal: string | null
         }
+
+        [k: string]: any
     }
 }
