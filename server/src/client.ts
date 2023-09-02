@@ -4,18 +4,22 @@ import sse = require('better-sse')
 
 import { server } from "./server.js";
 import NBedrock from './bedrock.js';
-import NInterpreter from './interpreter.js';
+import NInterpreter, { NInterpreterConfig } from './interpreter.js';
 
 server.get('/', (req, res) => res.redirect('/app'))
 server.use('/app', express.static('../client/app', { index: 'main.html' }))
 
 server.get('/client/data', (req, res) => {
     const { consoleLogList, entitiesInitProps, eventListeners, eventLogList, processConsoleLogList, states, systemRuns, worldInitProps, worldProps } = NInterpreter
+    const { consoleLogLimit, eventListenersLogLimit, processConsoleLogLimit, eventListenersAutoclearThreshold, systemRunsAutoclearThreshold } = NInterpreterConfig
     const { pid = 0, exitCode, signalCode, killed } = NBedrock.childProcess
 
     const d: NodeBedrock.GetData = {
-        bedrock: { pid, exitCode, signalCode, killed },
-        consoleLog: processConsoleLogList,
+        bedrock: {
+            pid, exitCode, signalCode, killed,
+            consoleLog: processConsoleLogList
+        },
+
         script: {
             consoleLog: consoleLogList,
             eventLog: eventLogList,
@@ -36,6 +40,15 @@ server.get('/client/data', (req, res) => {
             },
             worldProperties: worldProps,
             states: states
+        },
+
+        limits: {
+            consoleLog: consoleLogLimit,
+            eventListeners: eventListenersLogLimit,
+            eventLog: eventListenersAutoclearThreshold,
+            eventListenerLog: eventListenersLogLimit,
+            processConsoleLog: processConsoleLogLimit,
+            systemRuns: systemRunsAutoclearThreshold
         }
     }
 

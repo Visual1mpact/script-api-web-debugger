@@ -73,10 +73,9 @@ declare namespace NodeBedrock {
             pid: number
             exitCode: number | null
             signalCode: string | null
-            killed: boolean
+            killed: boolean,
+            consoleLog: Events['line'][]
         }
-
-        consoleLog: Events['line'][]
 
         script: {
             consoleLog: Bedrock.Events['console'][]
@@ -86,6 +85,15 @@ declare namespace NodeBedrock {
             propertyRegistry: Pick<Bedrock.Events['property_registry'], 'entities' | 'world'>
             worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
             states: Record<string, Bedrock.T_DynamicPropertyValue>
+        }
+
+        limits: {
+            processConsoleLog: number
+            consoleLog: number
+            eventLog: number
+            eventListenerLog: number
+            systemRuns: number
+            eventListeners: number
         }
     }
 

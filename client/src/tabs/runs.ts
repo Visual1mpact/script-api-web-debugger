@@ -17,7 +17,7 @@ export abstract class RunList {
 
     static readonly list = new Map<number, RunList>()
 
-    static autoflushThreshold = 200
+    static autoflushThreshold = 100
     static autoflushEnable = true
     static #flushCache = new Set<number>()
 
@@ -447,6 +447,8 @@ function handleRunChange(ev: Bedrock.Events['system_run_change']) {
     optsPulse.addEventListener('change', () => RunList.pulse = optsPulse.checked)
 
     // init & sse
+
+    RunList.autoflushThreshold = init.limits.systemRuns
 
     for (const { id, duration, fn, addTick, addStack, type, clearTick, clearStack, isCleared, isSuspended } of init.script.systemRuns) {
         const data = type === 'runInterval'

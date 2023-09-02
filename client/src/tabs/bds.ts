@@ -7,7 +7,7 @@ export class BDSList {
     static readonly table = getIdThrow('bds-log-list', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 
-    static logLimit = 300
+    static logLimit = 400
     static logLevelColor: Record<LogLevelOrUnknown, string> = {
         log: 'white',
         unknown: 'white',
@@ -110,12 +110,14 @@ getIdThrow('bds-log-opts').addEventListener('click', (ev) => {
 
 // data
 
+BDSList.logLimit = init.limits.processConsoleLog
+
 stats.pid.textContent = init.bedrock.pid + ''
 stats.status.textContent = init.bedrock.signalCode ? 'killed' : init.bedrock.exitCode !== null ? 'stopped' : 'running'
 stats.kc.textContent = init.bedrock.exitCode + '' || '-'
 stats.ks.textContent = init.bedrock.signalCode ?? '-'
 
-for (const d of init.consoleLog) BDSList.handle(d)
+for (const d of init.bedrock.consoleLog) BDSList.handle(d)
 
 sseEvents.addEventListener('line', ({detail: data}) => BDSList.handle(data))
 sseEvents.addEventListener('exit', ({ detail: { code, signal } }) => {

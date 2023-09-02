@@ -14,7 +14,7 @@ export class EventLogList {
     static readonly table = getIdThrow('event-log', HTMLTableElement)
     static readonly list = this.table.tBodies.item(0) ?? this.table.createTBody()
 
-    static logLimit = 100
+    static logLimit = 200
 
     static handle(ev: Bedrock.Events['event']) {
         const { name, isBefore, isSystem, tick, timing: { functions, self, total } } = ev
@@ -214,6 +214,8 @@ export class EventLogList {
 
     // init & sse
 
+    EventLogList.logLimit = init.limits.eventLog
+
     for (const d of init.script.eventLog) EventLogList.handle(d)
 
     bedrockEvents.addEventListener('event', async ({detail: data}) => EventLogList.handle(data))
@@ -225,10 +227,10 @@ export class EventListeners {
 
     static readonly list = new Map<string, EventListeners>()
 
-    static autoflushThreshold = 100
+    static autoflushThreshold = 70
     static autoflushEnable = true
     static #flushCache = new Set<string>()
-    static logLimit = 30
+    static logLimit = 20
 
     static flush() {
         for (const id of this.#flushCache) this.list.get(id)?.unlist()
@@ -464,6 +466,9 @@ export class EventListeners {
     optsAutoclear.addEventListener('change', () => EventListeners.autoflushEnable = optsAutoclear.checked)
 
     // init & sse
+
+    EventListeners.autoflushThreshold = init.limits.eventListeners
+    EventListeners.logLimit = init.limits.eventListenerLog
 
     function initRun(data: [string, NodeBedrock.Interpreter.EventListener[]][], system: boolean, before: boolean) {
         for (const [id, listeners] of data) {
