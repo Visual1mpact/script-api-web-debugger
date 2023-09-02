@@ -68,6 +68,27 @@ declare namespace NodeBedrock {
         }
     }
 
+    interface GetData {
+        bedrock: {
+            pid: number
+            exitCode: number | null
+            signalCode: string | null
+            killed: boolean
+        }
+
+        consoleLog: Events['line'][]
+
+        script: {
+            consoleLog: Bedrock.Events['console'][]
+            eventListeners: Record<'world' | 'system', Record<'before' | 'after', [string, Interpreter.EventListener[]][]>>
+            eventLog: Bedrock.Events['event'][]
+            systemRuns: Interpreter.SystemRun[]
+            propertyRegistry: Pick<Bedrock.Events['property_registry'], 'entities' | 'world'>
+            worldProperties: [string, Bedrock.T_DynamicPropertyValue][]
+            states: [string, Bedrock.T_DynamicPropertyValue][]
+        }
+    }
+
     namespace Interpreter {
         interface EventListener extends Bedrock.FunctionIdentifier {
             lastSubscribeTick: number
