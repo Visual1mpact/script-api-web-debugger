@@ -1,3 +1,5 @@
+import { proxyList } from "../proc/proxy.js"
+
 const AsyncFunction = (async()=>{}).constructor as Function,
     GeneratorFunction = (function*(){}).constructor as Function,
     AsyncGeneratorFunction = (async function*(){}).constructor as Function,
@@ -192,6 +194,22 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
 
             properties: [],
             proto: ''
+        }
+    }
+    else if (proxyList.has(val)) {
+        const data = proxyList.get(val)
+        if (!data) throw new ReferenceError('how')
+
+        const { handler, revoke, object } = data
+        obj = {
+            type: 'proxy',
+
+            handler: inspectJSON(handler, ns) as JSONInspect.Values.Object,
+            object: inspectJSON(object, ns) as JSONInspect.Values.Object,
+            revocable: revoke,
+
+            properties: [],
+            proto: 'Proxy'
         }
     }
     else {

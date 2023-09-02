@@ -226,6 +226,19 @@ export function uninspectJSONToElement(data: JSONInspect.All): HTMLElement {
             return elm
         }
 
+        case 'proxy': {
+            const { elm, tbody, once } = uninspectObject({ proto: 'Proxy', properties: [] })
+            const { handler, object, revocable } = data
+
+            once.finally(() => {
+                insertRow(tbody, 0, [ '[object]', uninspectJSONToElement(object) ])
+                insertRow(tbody, 1, [ '[handler]', uninspectJSONToElement(handler) ])
+                insertRow(tbody, 2, [ '[revocable]', uninspectJSONToElement({ type: 'boolean', value: revocable }) ])
+            })
+
+            return elm
+        }
+
         case 'object':
         default:
             return uninspectObject(data).elm

@@ -84,6 +84,19 @@ declare namespace JSONInspect {
             type: 'object'
             __T?: Record<any, any>
         }
+
+        interface Proxy {
+            type: 'proxy'
+
+            handler: Object
+            object: Object
+            revocable: boolean
+
+            properties: []
+            proto: string
+
+            __T?: Record<any, any>
+        }
     }
 
     namespace Typed {
@@ -101,12 +114,25 @@ declare namespace JSONInspect {
             type: 'map'
             entries: [To<K>, To<V>][]
         }
-        
-        type XObject<O = Record<string | symbol, any>> = ObjectBase & {
+
+        type XObject<O = Record<string | symbol, any>> = {
             type: 'object'
             __T?: O
         }
-    
+        
+        type XProxy<O = Record<string | symbol, any>> = ObjectBase & {
+            type: 'proxy'
+
+            handler: Object
+            object: Object
+            revocable: boolean
+
+            properties: []
+            proto: string
+
+            __T?: O
+        }
+                
         type XString<T extends string> = {
             type: 'string'
             value: T
@@ -158,6 +184,7 @@ declare namespace JSONInspect {
             : T extends { type: 'set'      } ? From<T['values'][number]>[]
             : T extends { type: 'map'      } ? Map<From<T['entries'][number][0]>, From<T['entries'][number][1]>>
             : T extends { type: 'object'   } ? NonNullable<T['__T']>
+            : T extends { type: 'proxy'    } ? NonNullable<T['__T']>
             : never
     }    
 
@@ -176,6 +203,7 @@ declare namespace JSONInspect {
         | Values.Map
         | Values.Weak
         | Values.Object
+        | Values.Proxy
         
     interface ObjectBase {
         name?: string

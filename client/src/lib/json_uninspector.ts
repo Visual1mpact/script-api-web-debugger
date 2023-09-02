@@ -51,7 +51,11 @@ export function uninspectJSON(val: JSONInspect.All, protoSymbol = true): any {
             protoSymbol, val
         )
         case 'object': return uninspectProperties(
-            Object.create(null),
+            val.properties,
+            protoSymbol, val
+        )
+        case 'proxy': return uninspectProperties(
+            val.object,
             protoSymbol, val
         )
 
