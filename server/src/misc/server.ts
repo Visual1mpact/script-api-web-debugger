@@ -4,17 +4,7 @@ import timersp = require('timers/promises')
 import { bedrock, bedrockInterpreter } from '../main.js'
 
 const server = express()
-
-let port = 7070
-const portArg = process.argv[3] || ''
-if (portArg) {
-    const portNew = +portArg
-
-    if (isNaN(portNew)) console.warn('Port is not a number, ignoring')
-    if (portNew < 0 || portNew > 65535) console.warn('Port is not within 0-65535, ignoring')
-
-    port = portNew
-}
+const port = 7070
 
 server.listen(port, () => console.log(`server started on port ${port}`))
 

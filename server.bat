@@ -79,7 +79,7 @@ if %dest% == "" (
 :p_start_top
 cls
 
-cmd /c node app/main.js %dest% %3
+cmd /c node app/main.js %dest%
 
 if %errorlevel% == 99 goto p_start_top
 
