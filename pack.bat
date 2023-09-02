@@ -12,6 +12,7 @@ cls
 echo w, watch   - runs tsc watch
 echo c, compile - converts TS to JS
 echo y, copy    - copy pack to directory
+echo i, install - install node dependencies
 echo.
 echo a, subadd  - adds a script pack to be debugged
 echo r, subrm   - removes an added script pack
@@ -43,6 +44,8 @@ if "%1" == "c" goto p_compile
 if "%1" == "compile" goto p_compile
 if "%1" == "y" goto p_copy
 if "%1" == "copy" goto p_copy
+if "%1" == "i" goto p_inst
+if "%1" == "install" goto p_inst
 
 if "%1" == "a" goto p_subadd
 if "%1" == "subadd" goto p_subadd
@@ -64,6 +67,15 @@ cls
 
 if exist pack\scripts rd /s /q pack\scripts
 cmd /c tsc -w -p tsconfig.json
+
+exit /b
+
+rem ------------ SUB: INST ------------
+
+:p_inst
+cls
+
+cmd /c node tool/packages_installer.js
 
 exit /b
 
