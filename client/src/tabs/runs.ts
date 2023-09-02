@@ -407,15 +407,15 @@ export class RunIntervalList extends RunList {
 }
 
 function handleRunChange(ev: Bedrock.Events['system_run_change']) {
-    const { id, type, duration, fn, stack, mode } = ev
+    const { id, type, duration, fn, stack, mode, tick } = ev
 
     let data = RunList.list.get(ev.id)
-    if (!data) data = type === 'runInterval' ? new RunIntervalList(id, type, duration, fn, stack) : new RunTimeoutList(id, type, duration, fn, stack)
+    if (!data) data = type === 'runInterval' ? new RunIntervalList(id, type, duration, fn, stack, tick + '') : new RunTimeoutList(id, type, duration, fn, stack, tick + '')
 
     switch (mode) {
         case 'add': break
 
-        case 'clear': data.clear(ev.stack); break
+        case 'clear': data.clear(stack, tick + ''); break
         case 'resume': data.suspended = false; break
         case 'suspend': data.suspended = true; break
     }
