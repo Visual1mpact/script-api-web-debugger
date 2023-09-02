@@ -67,7 +67,7 @@ server.post('/client/kill', (req, res) => {
     res.end()
 })
 
-server.post('/client/sendeval',
+server.post('/client/send_eval',
     express.text({ type: () => true }),
     
     async (req, res) => {
