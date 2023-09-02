@@ -148,7 +148,7 @@ server.get('/bedrock/longdata/:id',
 )
 
 server.post('/bedrock/event/:event',
-    express.json({ type: 'application/json' }),
+    express.json({ type: 'application/json', limit: Infinity }),
 
     (req, res) => {
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
@@ -163,7 +163,7 @@ server.post('/bedrock/event/:event',
 )
 
 server.post('/bedrock/eval',
-    express.json({ type: 'application/json' }),
+    express.json({ type: 'application/json', limit: Infinity }),
 
     (req, res) => {
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
