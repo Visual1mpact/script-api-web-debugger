@@ -213,7 +213,7 @@ const tab = getIdThrow('tab-stats')
 
 // timing
 {
-    const timingSets: Record<'tick' | 'run' | 'runCount' | 'event', ChartDataset<'line'>> = {
+    const timingSets: Record<'tick' | 'run' | 'runCount' | 'event' | 'datas', ChartDataset<'line'>> = {
         tick: {
             data: [],
             label: 'tick',
@@ -229,6 +229,11 @@ const tab = getIdThrow('tab-stats')
         event: {
             data: [],
             label: 'event',
+        },
+        datas: {
+            data: [],
+            label: 'data count',
+            hidden: true
         }
     }
     const timingValues = Object.values(timingSets)
@@ -239,7 +244,7 @@ const tab = getIdThrow('tab-stats')
         v.pointRadius = 0
     }
 
-    let runTime = 0, runCount = 0, eventTime = 0
+    let runTime = 0, runCount = 0, eventTime = 0, dataCount = 0
     let pendingUpdate = false
 
     const timingChart = new Chart(getIdThrow('stats-timing', HTMLCanvasElement), {
@@ -279,6 +284,8 @@ const tab = getIdThrow('tab-stats')
     })
 
     sseEvents.addEventListener('data', ({ detail: data }) => {
+        dataCount++
+
         switch (data.name) {
             case 'event':
                 eventTime += data.data.timing.total
@@ -294,6 +301,7 @@ const tab = getIdThrow('tab-stats')
                 timingSets.run.data.push(runTime)
                 timingSets.runCount.data.push(runCount)
                 timingSets.event.data.push(eventTime)
+                timingSets.datas.data.push(dataCount)
 
                 timingLabels.push(data.data.tick.toString(29))
                 if (timingLabels.length > 200) {
@@ -301,7 +309,7 @@ const tab = getIdThrow('tab-stats')
                     for (const v of timingValues) v.data.shift()
                 }
 
-                runTime = 0, runCount = 0, eventTime = 0
+                runTime = runCount = eventTime = dataCount = 0
                 pendingUpdate = true
             break
         }
