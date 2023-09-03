@@ -34,7 +34,7 @@ export class BDSList {
             }
         })
 
-        if (BDSList.list.rows.length > BDSList.logLimit) BDSList.list.deleteRow(-1)
+        if (BDSList.list.rows.length > BDSList.logLimit) BDSList.list.deleteRow(0)
 
     }
 
