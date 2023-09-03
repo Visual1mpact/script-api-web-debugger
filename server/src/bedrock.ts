@@ -162,6 +162,22 @@ server.post('/bedrock/event/:event',
     }
 )
 
+server.post('/bedrock/event_batch',
+    express.json({ type: 'application/json', limit: Infinity }),
+
+    (req, res) => {
+        if (req.header('content-type') !== 'application/json') return res.status(415).end()
+
+        for (const [name, data] of req.body) {
+            NBedrock.events.emit('data', {name, data})
+            NBedrock.bedrockEvents.emit(name, data)
+        }
+
+        res.header('Content-Type', 'text/plain')
+        res.end()
+    }
+)
+
 server.post('/bedrock/eval',
     express.json({ type: 'application/json', limit: Infinity }),
 

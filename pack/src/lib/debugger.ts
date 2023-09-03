@@ -1,7 +1,6 @@
 import EventEmitter from "./event.js";
 import { ScriptEventSource, system } from '@minecraft/server'
 import { postJSON } from "./misc.js";
-import { PromiseController } from "./abortctrl.js";
 import { http } from "@minecraft/server-net";
 
 const log = console.log
@@ -12,15 +11,15 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceType }) =>
     Debugger.incoming.emit(id.substring(6) as any, JSON.parse(message))
 })
 
-const eventUrl = new PromiseController<number>()
-
 namespace Debugger {
     export const incoming = new EventEmitter<NodeBedrock.Messages>('[Hook:Incoming]')
 
-    export const outgoingPort = eventUrl.promise
+    export let sendPort = 0
+    export let sendBatch: [keyof Bedrock.Events, any][] = []
+    export let sendPaused = false
 
-    export async function send<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
-        return postJSON(`http://127.0.0.1:${await outgoingPort}/bedrock/event/${encodeURIComponent(name)}`, { name, data })
+    export function send<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
+        sendBatch.push([name, data])
     }
 
     export function sendConsole<K extends keyof Bedrock.Events>(name: K, data: Bedrock.Events[K]) {
@@ -30,9 +29,21 @@ namespace Debugger {
 
 export default Debugger
 
-Debugger.incoming.addEventListener('handshake', port => eventUrl.resolve(port), { once: true })
+Debugger.incoming.addEventListener('handshake', port => Debugger.sendPort = port, { once: true })
+
+system.runInterval(() => {
+    const port = Debugger.sendPort
+    if (!port || Debugger.sendPaused) return
+
+    Debugger.sendPaused = true
+    postJSON(`http://127.0.0.1:${port}/bedrock/event_batch`, Debugger.sendBatch)
+        .finally(() => { Debugger.sendPaused = false })
+    
+    Debugger.sendBatch = []
+}, 2)
+
 Debugger.incoming.addEventListener('longdata', async id => {
-    const res = await http.get(`http://127.0.0.1:${await Debugger.outgoingPort}/bedrock/longdata/${encodeURIComponent(id)}`)
+    const res = await http.get(`http://127.0.0.1:${await Debugger.sendPort}/bedrock/longdata/${encodeURIComponent(id)}`)
     if (res.status !== 200) return
 
     const { name, data } = JSON.parse(res.body)
