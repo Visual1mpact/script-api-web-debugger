@@ -20,5 +20,5 @@ NBedrock.events.on('line', data => {
 })
 
 NBedrock.events.once('exit', ({ code, signal }) => {
-    console.log(`bedrock process exited with code ${code ?? '-'} (signal: ${signal ?? '-'})`)
+    console.log(`bedrock process exited with`, code === null ? `signal ${signal}` : `code ${code} (hex: 0x${code.toString(16)})`)
 })
