@@ -44,7 +44,7 @@ declare namespace JSONInspect {
             desc: string | undefined
         }
 
-        interface Function {
+        interface Function extends ObjectBase {
             type: 'function'
     
             name: string
@@ -56,9 +56,6 @@ declare namespace JSONInspect {
             isFunc: boolean
             isAsync: boolean
             isGenerator: boolean
-    
-            properties: [PropertyData, All][]
-            proto: string
         }
     
         interface Array extends ObjectBase {
@@ -85,15 +82,12 @@ declare namespace JSONInspect {
             __T?: Record<any, any>
         }
 
-        interface Proxy {
+        interface Proxy extends ObjectBase {
             type: 'proxy'
 
             handler: Object
             object: Object
             revocable: boolean
-
-            properties: []
-            proto: string
 
             __T?: Record<any, any>
         }
@@ -126,9 +120,6 @@ declare namespace JSONInspect {
             handler: Object
             object: Object
             revocable: boolean
-
-            properties: []
-            proto: string
 
             __T?: O
         }

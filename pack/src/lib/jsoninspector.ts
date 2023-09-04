@@ -134,6 +134,14 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
     if (val === null) return { type: 'null' }
     if (val === undefined) return { type: 'undefined' }
 
+    // objects
+
+    const ns = stack.concat([val])
+    const nproto = Object.getPrototypeOf(val), constructor = nproto?.constructor
+
+    let properties = descriptors(val)
+    let obj: JSONInspect.All
+
     if (val instanceof Error) return {
         type: 'error',
         error: String(val),
@@ -143,14 +151,6 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
             stack: val.stack ?? ''
         }
     }
-
-    // objects
-
-    const ns = stack.concat([val])
-    const nproto = Object.getPrototypeOf(val), constructor = nproto?.constructor
-
-    let properties = descriptors(val)
-    let obj: JSONInspect.All
 
     if (val instanceof Array || val instanceof TypedArray) {
         obj = {
@@ -226,7 +226,7 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
     }
 
     obj.properties = inspectProperties(val, properties, ns)
-    obj.proto = inspectProto(val, nproto, ns)
+    obj.proto ||= inspectProto(val, nproto, ns)
 
     return obj
 }
