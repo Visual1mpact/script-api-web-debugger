@@ -15,14 +15,14 @@ const protoIgnore = new Set<any>([
     Promise
 ])
 
-function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, PropertyDescriptor]>, stack: any[]) {
+function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, PropertyDescriptor]>, stack: any[], cache: InspectCacheMap) {
     const out: [JSONInspect.PropertyData, JSONInspect.All][] = []
     const ns = stack.concat([obj])
 
     for (const [key, desc] of descriptors) {
         let val: JSONInspect.All
 
-        try { val = inspectJSON(desc.get ? desc.get.call(obj) : desc.value, ns) }
+        try { val = inspectJSON(desc.get ? desc.get.call(obj) : desc.value, ns, cache) }
         catch(e) {
             val = {
                 type: 'getter_error',
@@ -39,8 +39,8 @@ function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, Pro
             {
                 name: String(key),
                 isSymbol: typeof key === 'symbol',
-                getter: desc.get ? inspectFunc(desc.get, stack) : undefined,
-                setter: desc.set ? inspectFunc(desc.set, stack) : undefined,
+                getter: desc.get ? inspectFunc(desc.get, stack, cache) : undefined,
+                setter: desc.set ? inspectFunc(desc.set, stack, cache) : undefined,
             },
             val
         ])
@@ -49,7 +49,7 @@ function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, Pro
     return out
 }
 
-function inspectProto(val: any, proto = val, stack: any[]): JSONInspect.Values.Object['proto'] {
+function inspectProto(val: any, proto = val, stack: any[], cache: InspectCacheMap): JSONInspect.Values.Object['proto'] {
     if (!proto) return
 
     const constructor = proto.constructor
@@ -62,12 +62,12 @@ function inspectProto(val: any, proto = val, stack: any[]): JSONInspect.Values.O
             : constructor != Object ? constructor.name
             : Symbol.toStringTag in val ? `${constructor.name} [${val[Symbol.toStringTag]}]`
             : '',
-        properties: inspectProperties(val, descriptors(proto), stack),
-        proto: inspectProto(val, Object.getPrototypeOf(proto), ns),
+        properties: inspectProperties(val, descriptors(proto), stack, cache),
+        proto: inspectProto(val, Object.getPrototypeOf(proto), ns, cache),
     }
 }
 
-function inspectFunc(fn: Function, stack: any[]): JSONInspect.Values.Function {
+function inspectFunc(fn: Function, stack: any[], cache: InspectCacheMap): JSONInspect.Values.Function {
     const constructor = fn.constructor,
         protoOf = Object.getPrototypeOf(fn)
     
@@ -78,13 +78,13 @@ function inspectFunc(fn: Function, stack: any[]): JSONInspect.Values.Function {
         srcFile: fn.fileName,
         srcLine: fn.lineNumber,
 
-        extend: protoOf instanceof Function ? inspectFunc(protoOf, stack) : undefined,
+        extend: protoOf instanceof Function ? inspectFunc(protoOf, stack, cache) : undefined,
 
         isFunc: Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable ?? true,
         isAsync: constructor === AsyncFunction || constructor === AsyncGeneratorFunction,
         isGenerator: constructor === GeneratorFunction || constructor === AsyncGeneratorFunction,
 
-        properties: inspectProperties(fn, descriptors(fn), stack),
+        properties: inspectProperties(fn, descriptors(fn), stack, cache),
         proto: 'Function'
     }
 }
@@ -98,7 +98,7 @@ function descriptors(obj: any) {
     return m
 }
 
-export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
+export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap = new Map): JSONInspect.All {
     const circular = stack.indexOf(val)
     if (circular !== -1) return { type: 'circular', index: circular }
 
@@ -124,9 +124,6 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
                 type: t,
                 desc: val.description ?? undefined
             }
-        
-        case 'function':
-            return inspectFunc(val, stack)
     }
 
     // null / undefined
@@ -136,23 +133,37 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
 
     // objects
 
+    const c = cache.get(val)
+    if (c) return {
+        type: 'ref',
+        id: c[0]
+    }
+
     const ns = stack.concat([val])
     const nproto = Object.getPrototypeOf(val), constructor = nproto?.constructor
 
     let properties = descriptors(val)
     let obj: JSONInspect.All
 
-    if (val instanceof Error) return {
-        type: 'error',
-        error: String(val),
-        errorObj: {
-            name: val.name,
-            message: val.message,
-            stack: val.stack ?? ''
+    if (val instanceof Error) {
+        const o: JSONInspect.Values.Error = {
+            type: 'error',
+            error: String(val),
+            errorObj: {
+                name: val.name,
+                message: val.message,
+                stack: val.stack ?? ''
+            }
         }
-    }
 
-    if (val instanceof Array || val instanceof TypedArray) {
+        cache.set(val, [ cache.size, o ])
+        return o
+    } 
+
+    if (val instanceof Function) {
+        obj = inspectFunc(val, stack, cache)
+    }
+    else if (val instanceof Array || val instanceof TypedArray) {
         obj = {
             type: 'array',
             name: `${val.constructor?.name}[${val.length}]`,
@@ -165,14 +176,14 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
         properties.delete('length')
         for (const [i, v] of val.entries()) {
             properties.delete(String(i))
-            obj.values.push( inspectJSON(v, ns) )
+            obj.values.push( inspectJSON(v, ns, cache) )
         }
     }
     else if (val instanceof Set) {
         obj = {
             type: 'set',
             name: `${val.constructor?.name}[${val.size}]`,
-            values: Array.from(val, v => inspectJSON(v, ns)),
+            values: Array.from(val, v => inspectJSON(v, ns, cache)),
 
             properties: [],
             proto: '',
@@ -182,7 +193,7 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
         obj = {
             type: 'map',
             name: `${val.constructor?.name}[${val.size}]`,
-            entries: Array.from(val, ([k, v]) => [inspectJSON(k, ns), inspectJSON(v, ns)]),
+            entries: Array.from(val, ([k, v]) => [inspectJSON(k, ns, cache), inspectJSON(v, ns, cache)]),
 
             properties: [],
             proto: '',
@@ -204,8 +215,8 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
         obj = {
             type: 'proxy',
 
-            handler: inspectJSON(handler, ns) as JSONInspect.Values.Object,
-            object: inspectJSON(object, ns) as JSONInspect.Values.Object,
+            handler: inspectJSON(handler, ns, cache) as JSONInspect.Values.Object,
+            object: inspectJSON(object, ns, cache) as JSONInspect.Values.Object,
             revocable: revoke,
 
             properties: [],
@@ -225,8 +236,24 @@ export function inspectJSON(val: any, stack: any[] = []): JSONInspect.All {
         }
     }
 
-    obj.properties = inspectProperties(val, properties, ns)
-    obj.proto ||= inspectProto(val, nproto, ns)
+    obj.properties = inspectProperties(val, properties, ns, cache)
+    obj.proto ||= inspectProto(val, nproto, ns, cache)
 
-    return obj
+    if (stack.length || cache.size) {
+        const id = cache.size
+        cache.set(val, [id, obj])
+        
+        return {
+            type: 'ref',
+            id
+        }
+    } else {
+        return {
+            type: 'rootref',
+            refs: Array.from(cache.values()),
+            value: obj
+        }
+    }
 }
+
+type InspectCacheMap = Map<any, [id: number, data: JSONInspect.All]>

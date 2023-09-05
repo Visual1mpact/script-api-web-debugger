@@ -91,6 +91,18 @@ declare namespace JSONInspect {
 
             __T?: Record<any, any>
         }
+
+        interface RootRef {
+            type: 'rootref'
+
+            refs: [number, All][]
+            value: All
+        }
+
+        interface Ref {
+            type: 'ref'
+            id: number
+        }
     }
 
     namespace Typed {
@@ -195,6 +207,8 @@ declare namespace JSONInspect {
         | Values.Weak
         | Values.Object
         | Values.Proxy
+        | Values.RootRef
+        | Values.Ref
         
     interface ObjectBase {
         name?: string

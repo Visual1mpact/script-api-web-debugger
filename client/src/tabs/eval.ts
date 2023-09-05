@@ -67,6 +67,7 @@ export async function sendInput(value: string) {
         retElm.style.color = data.error ? 'lightcoral' : 'lime'
         resElm.append(uninspectJSONToElement(data.result))
     } catch(e) {
+        console.error('Eval failed:', e)
         retElm.style.color = 'lightcoral'
         resElm.textContent = String(e)
     }
