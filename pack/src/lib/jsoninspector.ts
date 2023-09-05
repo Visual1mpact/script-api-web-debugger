@@ -15,7 +15,7 @@ const protoIgnore = new Set<any>([
     Promise
 ])
 
-function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, PropertyDescriptor]>, stack: any[], cache: InspectCacheMap) {
+function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, PropertyDescriptor]>, stack: any[], cache?: InspectCacheMap) {
     const out: [JSONInspect.PropertyData, JSONInspect.All][] = []
     const ns = stack.concat([obj])
 
@@ -49,7 +49,7 @@ function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, Pro
     return out
 }
 
-function inspectProto(val: any, proto = val, stack: any[], cache: InspectCacheMap): JSONInspect.Values.Object['proto'] {
+function inspectProto(val: any, proto = val, stack: any[], cache?: InspectCacheMap): JSONInspect.Values.Object['proto'] {
     if (!proto) return
 
     const constructor = proto.constructor
@@ -67,7 +67,7 @@ function inspectProto(val: any, proto = val, stack: any[], cache: InspectCacheMa
     }
 }
 
-function inspectFunc(fn: Function, stack: any[], cache: InspectCacheMap): JSONInspect.Values.Function {
+function inspectFunc(fn: Function, stack: any[], cache?: InspectCacheMap): JSONInspect.Values.Function {
     const constructor = fn.constructor,
         protoOf = Object.getPrototypeOf(fn)
     
@@ -98,7 +98,7 @@ function descriptors(obj: any) {
     return m
 }
 
-function inspectInternal(val: any, stack: any[], cache: InspectCacheMap): JSONInspect.All {
+function inspectInternal(val: any, stack: any[], cache?: InspectCacheMap): JSONInspect.All {
     const circular = stack.indexOf(val)
     if (circular !== -1) return { type: 'circular', index: circular }
 
@@ -133,7 +133,7 @@ function inspectInternal(val: any, stack: any[], cache: InspectCacheMap): JSONIn
 
     // objects
 
-    const c = cache.get(val)
+    const c = cache?.get(val)
     if (c) return {
         type: 'ref',
         id: c[0]
@@ -156,7 +156,7 @@ function inspectInternal(val: any, stack: any[], cache: InspectCacheMap): JSONIn
             }
         }
 
-        cache.set(val, [ cache.size, o ])
+        cache?.set(val, [ cache.size, o ])
         return o
     } 
 
@@ -239,16 +239,23 @@ function inspectInternal(val: any, stack: any[], cache: InspectCacheMap): JSONIn
     obj.properties = inspectProperties(val, properties, ns, cache)
     obj.proto ||= inspectProto(val, nproto, ns, cache)
 
-    const id = cache.size
-    cache.set(val, [id, obj])
-    return { type: 'ref', id }
+    if (cache) {
+        const id = cache.size
+        cache.set(val, [id, obj])
+        return {
+            type: 'ref',
+            id
+        }
+    } else {
+        return obj
+    }
 }
 
-export function inspectJSON(val: any): JSONInspect.All {
-    const caches: InspectCacheMap = new Map
+export function inspectJSON(val: any, useRefs = true): JSONInspect.All {
+    const caches: InspectCacheMap | undefined = useRefs ? new Map : undefined
     const data = inspectInternal(val, [], caches)
 
-    if (caches.size) return {
+    if (caches?.size) return {
         type: 'rootref',
         refs: Array.from(caches.values()),
         value: data

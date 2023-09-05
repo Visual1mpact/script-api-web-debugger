@@ -34,7 +34,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
 
                         const delta = Date.now() - t
                         return {
-                            fn: inspectJSON(fn) as JSONInspect.Values.Function,
+                            fn: inspectJSON(fn, false) as JSONInspect.Values.Function,
                             fid: id,
                             time: delta,
                             error: undefined
@@ -42,7 +42,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                     } catch(e) {
                         const delta = Date.now() - t
                         return {
-                            fn: inspectJSON(fn) as JSONInspect.Values.Function,
+                            fn: inspectJSON(fn, false) as JSONInspect.Values.Function,
                             fid: id,
                             time: delta,
                             error: inspectJSON(e)
@@ -106,7 +106,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                         isSystem,
                         isBefore,
         
-                        fn: inspectJSON(fn) as any,
+                        fn: inspectJSON(fn, false) as any,
                         fid: fidc,
                         stack: getStackTrace(2),
         
@@ -129,7 +129,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                 isSystem,
                 isBefore,
 
-                fn: inspectJSON(fn) as any,
+                fn: inspectJSON(fn, false) as any,
                 fid: fid,
                 stack: getStackTrace(2),
 
@@ -150,7 +150,7 @@ function wrapEvent<T extends string>(data: Record<T, EventObject>, isSystem: boo
                 isSystem,
                 isBefore,
 
-                fn: inspectJSON(fn) as any,
+                fn: inspectJSON(fn, false) as any,
                 fid,
                 stack: getStackTrace(2),
 

@@ -32,7 +32,7 @@ const clr = System.prototype.clearRun = (id) => {
         duration: -1,
         type: d.type,
 
-        fn: inspectJSON(d.fn) as any,
+        fn: inspectJSON(d.fn, false) as any,
         fid: ids.get(d.fn) ?? -1,
         stack: getStackTrace(2),
 
@@ -63,7 +63,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
 
                     id,
                     
-                    fn: inspectJSON(fn) as any,
+                    fn: inspectJSON(fn, false) as any,
                     fid,
 
                     delta
@@ -75,7 +75,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
 
                     id,
 
-                    fn: inspectJSON(fn) as any,
+                    fn: inspectJSON(fn, false) as any,
                     fid,
 
                     delta,
@@ -104,7 +104,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
                     duration: d ?? -1,
                     id,
         
-                    fn: inspectJSON(fn) as any,
+                    fn: inspectJSON(fn, false) as any,
                     fid,
                     stack: getStackTrace(2),
         
@@ -127,7 +127,7 @@ for (const k of ['run', 'runInterval', 'runTimeout'] as const) {
             duration: d ?? -1,
             id,
 
-            fn: inspectJSON(fn) as any,
+            fn: inspectJSON(fn, false) as any,
             fid,
             stack: getStackTrace(2),
 
