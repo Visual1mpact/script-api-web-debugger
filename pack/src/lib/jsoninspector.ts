@@ -22,7 +22,7 @@ function inspectProperties(obj: any, descriptors: Iterable<[string | symbol, Pro
     for (const [key, desc] of descriptors) {
         let val: JSONInspect.All
 
-        try { val = inspectJSON(desc.get ? desc.get.call(obj) : desc.value, ns, cache) }
+        try { val = inspectInternal(desc.get ? desc.get.call(obj) : desc.value, ns, cache) }
         catch(e) {
             val = {
                 type: 'getter_error',
@@ -98,7 +98,7 @@ function descriptors(obj: any) {
     return m
 }
 
-export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap = new Map): JSONInspect.All {
+function inspectInternal(val: any, stack: any[], cache: InspectCacheMap): JSONInspect.All {
     const circular = stack.indexOf(val)
     if (circular !== -1) return { type: 'circular', index: circular }
 
@@ -176,14 +176,14 @@ export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap 
         properties.delete('length')
         for (const [i, v] of val.entries()) {
             properties.delete(String(i))
-            obj.values.push( inspectJSON(v, ns, cache) )
+            obj.values.push( inspectInternal(v, ns, cache) )
         }
     }
     else if (val instanceof Set) {
         obj = {
             type: 'set',
             name: `${val.constructor?.name}[${val.size}]`,
-            values: Array.from(val, v => inspectJSON(v, ns, cache)),
+            values: Array.from(val, v => inspectInternal(v, ns, cache)),
 
             properties: [],
             proto: '',
@@ -193,7 +193,7 @@ export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap 
         obj = {
             type: 'map',
             name: `${val.constructor?.name}[${val.size}]`,
-            entries: Array.from(val, ([k, v]) => [inspectJSON(k, ns, cache), inspectJSON(v, ns, cache)]),
+            entries: Array.from(val, ([k, v]) => [inspectInternal(k, ns, cache), inspectInternal(v, ns, cache)]),
 
             properties: [],
             proto: '',
@@ -215,8 +215,8 @@ export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap 
         obj = {
             type: 'proxy',
 
-            handler: inspectJSON(handler, ns, cache) as JSONInspect.Values.Object,
-            object: inspectJSON(object, ns, cache) as JSONInspect.Values.Object,
+            handler: inspectInternal(handler, ns, cache) as JSONInspect.Values.Object,
+            object: inspectInternal(object, ns, cache) as JSONInspect.Values.Object,
             revocable: revoke,
 
             properties: [],
@@ -239,21 +239,22 @@ export function inspectJSON(val: any, stack: any[] = [], cache: InspectCacheMap 
     obj.properties = inspectProperties(val, properties, ns, cache)
     obj.proto ||= inspectProto(val, nproto, ns, cache)
 
-    if (stack.length || cache.size) {
-        const id = cache.size
-        cache.set(val, [id, obj])
-        
-        return {
-            type: 'ref',
-            id
-        }
-    } else {
-        return {
-            type: 'rootref',
-            refs: Array.from(cache.values()),
-            value: obj
-        }
+    const id = cache.size
+    cache.set(val, [id, obj])
+    return { type: 'ref', id }
+}
+
+export function inspectJSON(val: any): JSONInspect.All {
+    const caches: InspectCacheMap = new Map
+    const data = inspectInternal(val, [], caches)
+
+    if (caches.size) return {
+        type: 'rootref',
+        refs: Array.from(caches.values()),
+        value: data
     }
+
+    return data
 }
 
 type InspectCacheMap = Map<any, [id: number, data: JSONInspect.All]>
