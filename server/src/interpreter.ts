@@ -18,8 +18,8 @@ namespace NInterpreter {
     export let consoleLogList: Bedrock.Events['console'][] = []
     export let eventLogList: Bedrock.Events['event'][] = []
 
-    export let worldInitProps: [property: string, data: Bedrock.T_DynamicPropertyData][]
-    export let entitiesInitProps: [id: string, properties: [property: string, data: Bedrock.T_DynamicPropertyData][]][]
+    export let worldInitProps: [property: string, data: Bedrock.T_DynamicPropertyData][] = []
+    export let entitiesInitProps: [id: string, properties: [property: string, data: Bedrock.T_DynamicPropertyData][]][] = []
 
     export let worldProps: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
     export let states: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)

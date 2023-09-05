@@ -236,6 +236,11 @@ export class PropertiesTable {
     getIdThrow('properties-world-list-cnt').appendChild(wtable.table)
     getIdThrow('properties-world-est').replaceChildren(String(wtable.estimatedSize))
 
+    bedrockEvents.addEventListener('property_registry', async ({ detail: data }) => {
+        for (const [k, v] of data.world)
+            wtable.register(k, v, data.worldInitProperties[k])
+    })
+
     bedrockEvents.addEventListener('property_set', async ({ detail: data }) => {
         if (data.type !== 'world') return
 
@@ -318,6 +323,11 @@ export class PropertiesTable {
     })
 
     // init & sse
+
+    bedrockEvents.addEventListener('property_registry', async ({ detail: data }) => {
+        for (const [k, v] of data.entities)
+            entityProperties.set(k, v)
+    })
 
     bedrockEvents.addEventListener('property_set', async ({ detail: data }) => {
         if (data.type !== 'entity') return
