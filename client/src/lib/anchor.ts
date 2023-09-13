@@ -1,17 +1,4 @@
 /**
- * Gets rect offset based on bound element / rect
- * @param bound Bound element / Rect
- * @param anchor Anchor
- * @returns Rect
- */
-export function getAnchor(bound: HTMLElement | DOMRectReadOnly, anchor: Anchors) {
-    const { x, y, width, height } = bound instanceof HTMLElement ? bound.getBoundingClientRect() : bound
-    const [ox, oy] = anchorOffsets[anchor]
-
-    return new DOMRect(x + width * ox, y + height * oy, width, height)
-}
-
-/**
  * Gets outer rect based on bound element / rect
  * @param target Target element / rect
  * @param bound Bound element / Rect

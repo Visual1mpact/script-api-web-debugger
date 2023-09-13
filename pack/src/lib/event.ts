@@ -1,5 +1,3 @@
-import type { AbortController, PromiseController } from "./abortctrl.js"
-
 export default class EventEmitter<Events extends Record<string, any>> {
     /**
      * Creates a new event emitter.
@@ -59,16 +57,6 @@ export default class EventEmitter<Events extends Record<string, any>> {
         const map = data.prioritizations[priority] ??= new Map
         map.set(listener, options)
 
-        // signal
-        if (options.signal) {
-            const { signal } = options
-            const f = () => this.removeEventListener(name, listener)
-
-            if ('addEventListener' in signal) signal.addEventListener('abort', f)
-            else if ('promise' in signal) signal.promise.finally(f)
-            else signal.finally(f)
-        }
-        
         return listener
     }
 
@@ -271,11 +259,6 @@ export interface EventListenerOptions {
      * Defaults to `false`.
      */
     once?: boolean
-
-    /**
-     * Unsubscribe signal, can be a `Promise`, `PromiseController`, or `AbortController`.
-     */
-    signal?: AbortController | PromiseController | Promise<any>
 }
 
 export interface HandlerEvents<T extends Record<string, any>> {
