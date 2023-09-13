@@ -18,7 +18,7 @@ export function getOuterAnchor(size: Size, rect: RectSizeOptional, anchor: Ancho
  * 
  * Key is an anchor type, value is the offset multiplier (0, 0.5, or 1)
  */
-export const anchorOffsets: Record<Anchors, [x: number, y: number]> = {
+const anchorOffsets: Record<Anchors, [x: number, y: number]> = {
     topleft     : [0.0, 0.0],
     topcenter   : [0.5, 0.0],
     topright    : [1.0, 0.0],
@@ -34,15 +34,14 @@ export const anchorOffsets: Record<Anchors, [x: number, y: number]> = {
 
 export type Anchors = `${'top' | 'middle' | 'bottom'}${'left' | 'center' | 'right'}`
 
-export interface Size {
+interface Size {
     readonly width: number
     readonly height: number
 }
 
-export interface Position {
+interface Position {
     readonly x: number
     readonly y: number
 }
 
-export interface Rect extends Size, Position {}
-export interface RectSizeOptional extends Partial<Size>, Position {}
+interface RectSizeOptional extends Partial<Size>, Position {}

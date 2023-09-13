@@ -2,9 +2,10 @@
     display: grid;
     grid-template-areas:
         'list list'
+        'res res'
         'input send'
     ;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr auto auto;
     grid-template-columns: 1fr auto;
     gap: 8px;
 }
@@ -33,11 +34,25 @@
     border-bottom: 1px solid var(--border-mid);
 }
 
+#eval-resize {
+    grid-area: res;
+
+    height: 8px;
+
+    background: var(--border-weak);
+    border-radius: 4px;
+    
+    cursor: ns-resize;
+}
+
+#eval-resize:hover {
+    background: var(--border-mid);
+}
+
 #eval-input {
     grid-area: input;
 
-    min-height: 3em;
-    height: 3em;
+    min-height: 4em;
     max-height: 500px;
 }
 
