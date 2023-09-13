@@ -54,6 +54,8 @@
 
     min-height: 4em;
     max-height: 500px;
+
+    resize: none;
 }
 
 #eval-send {
