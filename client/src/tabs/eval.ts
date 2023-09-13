@@ -1,11 +1,13 @@
 import { element } from "../lib/element.js";
 import { uninspectJSONToElement } from "../lib/json_elm_uninspector.js";
 import { getIdThrow } from "../lib/misc.js";
+import { handleResize } from "../lib/resize.js";
 import { sendEval } from "../util.js";
 
 const list = getIdThrow('eval-list')
 const input = getIdThrow('eval-input', HTMLTextAreaElement)
 const send = getIdThrow('eval-send', HTMLButtonElement)
+const resize = getIdThrow('eval-resize')
 
 export async function sendInput(value: string) {
     let retElm, resElm
@@ -85,3 +87,5 @@ send.addEventListener('click', () => {
     if (!input.value) return input.focus()
     sendInput(input.value)
 })
+
+handleResize(resize, input, 0, -1)

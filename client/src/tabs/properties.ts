@@ -139,7 +139,7 @@ export class PropertiesTable {
 
                 switch (charCode || keyCode || which) {
                     case 13: {
-                        if (!ctrlKey) return
+                        if (!ctrlKey) break
                         ev.preventDefault()
 
                         this.sendUpdate(key, value)
