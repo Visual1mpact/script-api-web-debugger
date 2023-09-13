@@ -23,7 +23,7 @@ export async function sendInput(value: string) {
                     'overflow': 'auto',
                     'max-height': '20em'
                 },
-                textContent: value,
+                innerHTML: hljs.highlight(value, { language: 'javascript' }, true).value,
             }),
             element('div', {
                 classes: 'flex',
