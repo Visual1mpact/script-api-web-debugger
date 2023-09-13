@@ -32,10 +32,10 @@ export function clamp(value: number, min = -Infinity, max = Infinity) {
 }
 
 /**
- * {@link fetch} but throws if not `ok` or `redirected`.
+ * {@link fetch} but throws if not `ok` or `redirected`
  * @param url Fetch URL
  * @param opts Fetch options
- * @returns Response.
+ * @returns Fetch response
  */
 export async function fetchThrow(url: string, opts?: RequestInit) {
     const res = await fetch(url, opts)
@@ -44,13 +44,13 @@ export async function fetchThrow(url: string, opts?: RequestInit) {
 }
 
 /**
- * Gets an element by its identifier, throws an error if undefined / does not match validation
+ * Gets an element by its identifier, throws an error if undefined / does not match the element type
  * @param id Element identifier
- * @param validate Validation
+ * @param type Validation
  * @param parent Root
  * @returns Element
  */
-export function getIdThrow<T extends new () => Element = new () => HTMLElement>(id: string, validate?: T, parent: NonElementParentNode = document): InstanceType<T> {
+export function getIdThrow<T extends new () => Element = new () => HTMLElement>(id: string, type?: T, parent: NonElementParentNode = document): InstanceType<T> {
     const elm = parent.getElementById(id)
     if (!elm)
         throw new ReferenceError(
@@ -62,14 +62,14 @@ export function getIdThrow<T extends new () => Element = new () => HTMLElement>(
             }
         )
 
-    if (validate && elm instanceof validate == false)
+    if (type && elm instanceof type == false)
         throw new TypeError(
-            `Element ID '${id}' (tag: ${elm.tagName}) is not an instance of ${validate.name}`,
+            `Element ID '${id}' (tag: ${elm.tagName}) is not an instance of ${type.name}`,
             {
                 cause: {
                     parent,
                     elm,
-                    validate
+                    validate: type
                 }
             }
         )
@@ -82,6 +82,7 @@ export function getIdThrow<T extends new () => Element = new () => HTMLElement>(
  * @param parent Parent element
  * @param index Index where the item will be inserted
  * @param element Element to be inserted
+ * @returns Element
  */
 export function insertAt<T extends Node>(parent: Node, index = -1, element: T) {
     parent.insertBefore(element, parent.childNodes[index] ?? null)
@@ -93,6 +94,7 @@ export function insertAt<T extends Node>(parent: Node, index = -1, element: T) {
  * @param parent Parent element
  * @param index Index where the item will be inserted
  * @param element Element to be inserted
+ * @returns Element
  */
 export function insertAtElement<T extends Node>(parent: Element, index = -1, element: T) {
     parent.insertBefore(element, parent.children.item(index))

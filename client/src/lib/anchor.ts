@@ -1,18 +1,23 @@
 /**
- * Gets outer rect based on bound element / rect
- * @param target Target element / rect
- * @param bound Bound element / Rect
- * @param anchor Anchor
- * @returns Rect
+ * Gets outer rect close to the specified rect based on the anchor type
+ * @param size Rect size, must have `width` and `height` property
+ * @param rect Rect, which the outer rect will anchor to
+ * @param anchor Anchor type
+ * @returns Outer rect
  */
-export function getOuterAnchor(target: HTMLElement | DOMRectReadOnly, bound: HTMLElement | DOMRectReadOnly, anchor: Anchors) {
-    const { x, y, width = 0, height = 0 } = bound instanceof HTMLElement ? bound.getBoundingClientRect() : bound
-    const { width: twidth, height: theight } = target instanceof HTMLElement ? target.getBoundingClientRect() : target
+export function getOuterAnchor(size: Size, rect: RectSizeOptional, anchor: Anchors) {
+    const { width: twidth, height: theight } = size instanceof HTMLElement ? size.getBoundingClientRect() : size
+    const { x, y, width = 0, height = 0 } = rect instanceof HTMLElement ? rect.getBoundingClientRect() : rect
     const [ox, oy] = anchorOffsets[anchor]
 
     return new DOMRect(x + width * ox - twidth * (1 - ox), y + height * oy - theight * (1 - oy), twidth, theight)
 }
 
+/**
+ * Anchor offsets
+ * 
+ * Key is an anchor type, value is the offset multiplier (0, 0.5, or 1)
+ */
 export const anchorOffsets: Record<Anchors, [x: number, y: number]> = {
     topleft     : [0.0, 0.0],
     topcenter   : [0.5, 0.0],
@@ -27,6 +32,17 @@ export const anchorOffsets: Record<Anchors, [x: number, y: number]> = {
     bottomright : [1.0, 1.0],
 }
 
-export type AnchorVertical = 'top' | 'middle' | 'bottom'
-export type AnchorHorizontal = 'left' | 'center' | 'right'
-export type Anchors = `${AnchorVertical}${AnchorHorizontal}`
+export type Anchors = `${'top' | 'middle' | 'bottom'}${'left' | 'center' | 'right'}`
+
+export interface Size {
+    readonly width: number
+    readonly height: number
+}
+
+export interface Position {
+    readonly x: number
+    readonly y: number
+}
+
+export interface Rect extends Size, Position {}
+export interface RectSizeOptional extends Partial<Size>, Position {}

@@ -24,7 +24,7 @@ export default class TypedEventTarget<T extends Record<string, any>> extends Eve
      * @param type Event name
      * @param data Event data
      * @param init Event init
-     * @returns true if either event's cancelable attribute value is false or its preventDefault() method was not invoked, false otherwise
+     * @returns true if either event's cancelable attribute value is false or its `preventDefault()` method was not invoked, false otherwise
      */
     emit<K extends Extract<keyof T, string>>(type: K, data: T[K], init?: EventInit | null) {
         const nd: any = data

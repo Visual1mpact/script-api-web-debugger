@@ -251,6 +251,14 @@ function inspectInternal(val: any, stack: any[], cache?: InspectCacheMap): JSONI
     }
 }
 
+/**
+ * Inspects a value, or an abject, or a function, or anything
+ * @param val Value to be inspected
+ * @param useRefs Whether refs to be used or not
+ * - If disabled (false), this will never return type `rootref`
+ * - If enabled (true) and has object references, this will return `rootref`
+ * @returns JSON data
+ */
 export function inspectJSON(val: any, useRefs = true): JSONInspect.All {
     const caches: InspectCacheMap | undefined = useRefs ? new Map : undefined
     const data = inspectInternal(val, [], caches)

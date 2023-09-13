@@ -2,12 +2,12 @@ import { Anchors, getOuterAnchor } from "./anchor.js"
 import { assignIfExist, insertAt } from "./misc.js"
 
 /**
- * Creates a new element
- * @param tagName Element tag name
- * @param opts Element options
- * @param ignores Option properties to be ignored
+ * Same as {@link Document.createElement} but allows more options. Creates a new HTML Element
+ * @param tagName HTML element tag name
+ * @param opts Element options, or children(s)
+ * @param ignores Option properties to be ignored during property assignment to the element
  * @param allowChildrens Appends childrens from options
- * @returns New element
+ * @returns New HTML element
  */
 export function element<T extends string>(tagName: T, opts?: ElementEditableObject | StringOrNodeOrArray, ignores?: Set<string> | string[], allowChildrens = true): T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement {
     const elm = document.createElement(tagName)
@@ -49,7 +49,7 @@ export function element<T extends string>(tagName: T, opts?: ElementEditableObje
 }
 
 /**
- * Creates a text node
+ * Creates a new `text` node
  * @param text Text
  */
 export function createText(text?: string) {
@@ -108,9 +108,9 @@ type TableOptions = ElementEditableObject
 /**
  * Adds a row on a table section / table element
  * @param section Table section / table element
- * @param index Index where row will be inserted at in the collection
+ * @param index Index where row will be inserted at in the section
  * @param opts Element options, or children(s)
- * @returns New row
+ * @returns New table row
  */
 export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, index?: number | undefined, opts?: StringOrNodeOrArray | ElementEditableObject) {
     const elm = insertAt(section, index, element('tr', opts, undefined, false))
@@ -124,11 +124,11 @@ export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, i
 }
 
 /**
- * Adds a cell on a table row
+ * Adds a table cell on a table row
  * @param row Table row
  * @param index Index where cell will be inserted at in the row
  * @param opts Element options, or children(s)
- * @returns New cell
+ * @returns New table cell
  */
 export function insertCell(row: HTMLTableRowElement, index?: number | undefined, opts?: StringOrNodeOrArray | ElementEditableObject<HTMLTableCellElement, 'colSpan' | 'headers' | 'rowSpan' | 'scope'>) {
     return insertAt( row, index, element('td', opts) )
@@ -180,6 +180,10 @@ function* childrens(opts?: StringOrNodeOrArray | ElementEditableObject) {
     }
 }
 
+/**
+ * String, or a Node, or an array of those.
+ * Mostly used for element children type
+ */
 export type StringOrNodeOrArray = string | Node | (string | Node)[]
 
 /** Editable HTML element properties, in form of object */
@@ -207,10 +211,35 @@ export type ElementEditableObject<T extends HTMLElement = HTMLElement, K extends
     >
     & Partial<{
         [x: string]: any
+
+        /**
+         * Element classes.
+         * Can be a string, or an iterable of it
+         */
         classes: string | Iterable<string>
+
+        /**
+         * Element childrens.
+         * Must be an iterable of strings or nodes
+         */
         childrens: Iterable<Node | string>
+
+        /**
+         * Element styles.
+         * Can be an object whose key is style property and value is style value,
+         * or an iterable pair
+         */
         styles: RecordOrIterable<string, string>
+
+        /**
+         * Element datas.
+         * Must be an object
+         */
         datas: Record<string, string>
+
+        /**
+         * Element listeners
+         */
         on: {
             [K in string]: ( (<T extends Event>(ev: T) => any) )
                 | {

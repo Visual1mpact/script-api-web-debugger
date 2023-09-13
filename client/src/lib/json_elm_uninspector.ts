@@ -94,6 +94,13 @@ function uninspectObject(val: JSONInspect.ObjectBase, refs?: Ref) {
     }
 }
 
+/**
+ * Inspects a JSON Function
+ * @param fn JSON Function
+ * @param noContent Disables inspecting the the function's properties (only show the name)
+ * @param refs Root reference. **Used internally**
+ * @returns Element data
+ */
 export function uninspectFunction(fn: JSONInspect.Values.Function, noContent = false, refs?: Ref) {
     const name = fn.isFunc
         ? fn.isAsync ? fn.isGenerator ? 'AsyncGeneratorFunction' : 'AsyncFunction' : fn.isGenerator ? 'GeneratorFunction' : 'Function'
@@ -137,6 +144,12 @@ export function uninspectFunction(fn: JSONInspect.Values.Function, noContent = f
     }
 }
 
+/**
+ * Uninspects a JSON inspect data to an element
+ * @param data JSON inspect data
+ * @param refs Root reference. **Used internally**
+ * @returns Element showcasing the JSON inspect data
+ */
 export function uninspectJSONToElement(data: JSONInspect.All, refs?: Ref): HTMLElement {
     switch (data.type) {
         case 'string':

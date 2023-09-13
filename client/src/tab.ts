@@ -1,5 +1,7 @@
 import { getIdThrow, iterateLength } from './lib/misc.js'
 
+// imports
+
 import './tabs/bds.js'
 import './tabs/console.js'
 import './tabs/eval.js'
@@ -8,8 +10,12 @@ import './tabs/properties.js'
 import './tabs/runs.js'
 import './tabs/stats.js'
 
+// initialize tabs
+
 const tabs = new Map<string, HTMLElement>()
 for (const elm of iterateLength(document.querySelectorAll<HTMLElement>('#tabs > [data-tab]'))) tabs.set(elm.dataset.tab ?? '', elm)
+
+// handle tab click
 
 const header = getIdThrow('header')
 header.addEventListener('click', ({ target }) => {
