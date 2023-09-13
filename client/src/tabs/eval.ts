@@ -38,9 +38,7 @@ export async function sendInput(value: string) {
                         on: {
                             click: {
                                 listener() { elm.remove() },
-                                options: {
-                                    once: true
-                                }
+                                once: true
                             }
                         }
                     })

@@ -1,51 +1,65 @@
 import { Anchors, getOuterAnchor } from "./anchor.js"
-import { assignIfExist, insertAt } from "./misc.js"
+import { assignIfExist, insertAt, iterateOr, iterateRecord } from "./misc.js"
 
 /**
  * Same as {@link Document.createElement} but allows more options. Creates a new HTML Element
  * @param tagName HTML element tag name
  * @param opts Element options, or children(s)
- * @param ignores Option properties to be ignored during property assignment to the element
- * @param allowChildrens Appends childrens from options
  * @returns New HTML element
  */
-export function element<T extends string>(tagName: T, opts?: ElementEditableObject | StringOrNodeOrArray, ignores?: Set<string> | string[], allowChildrens = true): T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement {
-    const elm = document.createElement(tagName)
-    if (!opts) return elm as any
+export function element<T extends string>(tag: T, opts?: CreateElementOptionsChildrened): T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement {
+    const optsIsChild = isChildren(opts)
+    const elm = document.createElement(tag, optsIsChild || !opts ? undefined : { is: opts.is })
 
-    if (opts instanceof Array) {
-        if (allowChildrens) for (const d of opts)
-            elm.append(typeof d === 'string' ? createText(d) : d)
-    }
-    else if (opts instanceof Node) {
-        if (allowChildrens) elm.append(opts)
-    }
-    else if (typeof opts === 'string') {
-        if (allowChildrens) elm.append(createText(opts))
-    }
-    else if (opts) {
-        assignIfExist(elm, opts, ignores)
-
-        if (opts.childrens && allowChildrens)
-            elm.replaceChildren(...opts.childrens)
-        
-        if (opts.classes)
-            elm.classList.add(...( typeof opts.classes !== 'string' ? opts.classes : [opts.classes] ))
-        
-        if (opts.styles)
-            for (const [k, v] of opts.styles[Symbol.iterator]?.() ?? Object.entries(opts.styles)) elm.style.setProperty(k, v)
-    
-        if (opts.datas) Object.assign(elm.dataset, opts.datas)
-
-        if (opts.on) {
-            for (const [k, v] of Object.entries(opts.on)) {
-                if (typeof v === 'function') elm.addEventListener(k, v)
-                else elm.addEventListener(k, v.listener, v.options)
-            }
-        }
+    if (opts) {
+        if (optsIsChild) elm.replaceChildren(...iterateOr(opts))
+        else applyOptions(elm, opts)
     }
 
     return elm as any
+}
+
+/**
+ * Applies options to the element
+ * 
+ * @param element element
+ * @param opts Options
+ * @returns element
+ */
+export function applyOptions<E extends CreateElementOptions.ElementType>(element: E, opts: CreateElementOptions.For<never, never>) {
+    assignIfExist(element as never, opts as never, ignoredKeys as never)
+
+    // apply attributes
+    if (opts.attributes)
+        for (const [k, v] of iterateRecord(opts.attributes))
+            element.setAttribute(k, v)
+
+    // apply classes
+    if (opts.classes)
+        element.classList.add(...iterateOr(opts.classes))
+
+    // apply datasets
+    if (opts.dataset)
+        for (const [k, v] of iterateRecord(opts.dataset))
+            element.dataset[k] = v
+    
+    // apply styles
+    if (opts.styles)
+        for (const [k, v] of iterateRecord(opts.styles))
+            element.style.setProperty(k, v)
+    
+    // add listeners
+    if (opts.on)
+        for (const [k, l] of iterateRecord(opts.on)) {
+            if (typeof l === 'function') element.addEventListener(k, l)
+            else element.addEventListener(k, l.listener, l)
+        }
+    
+    // add childrens
+    if (opts.childrens)
+        element.replaceChildren(...iterateOr(opts.childrens))
+
+    return element
 }
 
 /**
@@ -62,48 +76,60 @@ export function createText(text?: string) {
  * @returns Table
  */
 export function createTable(tableOptions: TableOptions) {
-    const table = element('table', tableOptions, ['thead', 'tbody', 'tfoot', 'caption'])
+    const table = element('table')
 
+    // table section (head, body, footer)
     for (const k of ['thead', 'tbody', 'tfoot'] as TableKeys[]) {
         const opts = tableOptions[k]
         if (opts === undefined) continue
+        delete tableOptions[k]
 
-        let section: HTMLTableSectionElement, init: TableSectionChildrensInit
+        let section = element(k),
+            childrens: OrIterable<CreateElementOptions.ChildrenOption> | undefined
 
-        if (Array.isArray(opts)) {
-            section = element(k, undefined, undefined, false)
-            init = opts
+        // childrens
+        if (isChildren(opts)) {
+            childrens = opts
         } else {
-            section = element(k, opts, undefined, false)
-            init = opts.init ?? []
+            if (opts.childrens) {
+                childrens = opts.childrens
+                delete opts.childrens
+            }
+            
+            applyOptions(section, opts)
         }
 
-        for (const row of init) {
-            if (row instanceof HTMLTableRowElement) section.append(row)
-            else insertRow(section, undefined, row)
+        if (childrens) {
+            for (const row of iterateOr(childrens)) {
+                if (row instanceof HTMLTableRowElement) section.append(row)
+                else insertRow(section, undefined, row)
+            }
         }
         
         table.appendChild(section)
     }
 
-    if (tableOptions.caption) table.append(element('caption', tableOptions.caption))
+    // caption
+    if (tableOptions.caption) {
+        table.append(element('caption', tableOptions.caption))
+        delete tableOptions.caption
+    }
+
+    // apply options
+    applyOptions(table as never, tableOptions as never)
 
     return table
 }
 
 type TableKeys = 'thead' | 'tbody' | 'tfoot'
-type TableSectionChildrensInit = ( HTMLTableRowElement | StringOrNodeOrArray | ElementEditableObject )[]
+type TableSectionInit = OrIterable<CreateElementOptions.ChildrenOption> | MutableSome<CreateElementOptions, 'childrens'>
 
-type TableOptions = ElementEditableObject
-    & {
-        [K in TableKeys]?: TableSectionChildrensInit
-            | ElementEditableObject & {
-                childrens?: undefined
-                init?: TableSectionChildrensInit
-            }
-    } & {
-        caption?: StringOrNodeOrArray | ElementEditableObject
-    }
+type TableOptions =
+    & CreateElementOptions
+    & Partial<
+        & Record<TableKeys, TableSectionInit>
+        & { caption?: CreateElementOptionsChildrened }
+    >
 
 /**
  * Adds a row on a table section / table element
@@ -112,15 +138,13 @@ type TableOptions = ElementEditableObject
  * @param opts Element options, or children(s)
  * @returns New table row
  */
-export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, index?: number | undefined, opts?: StringOrNodeOrArray | ElementEditableObject) {
-    const elm = insertAt(section, index, element('tr', opts, undefined, false))
-
-    for (const child of childrens(opts)) {
-        if (child instanceof HTMLTableCellElement) elm.append(child)
-        else elm.insertCell().append(child)
+export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, index?: number | undefined, opts?: MutableSome<CreateElementOptions, 'childrens'> | CreateElementOptions.ChildrenOption) {
+    if (opts) {
+        if (isChildren(opts)) opts = Array.from(iterateOr(opts), v => v instanceof HTMLTableCellElement ? v : element('td', v))
+        else if (opts.childrens) opts.childrens = Array.from(iterateOr(opts.childrens), v => v instanceof HTMLTableCellElement ? v : element('td', v))
     }
 
-    return elm
+    return insertAt(section, index, element('tr', opts))
 }
 
 /**
@@ -130,8 +154,8 @@ export function insertRow(section: HTMLTableElement | HTMLTableSectionElement, i
  * @param opts Element options, or children(s)
  * @returns New table cell
  */
-export function insertCell(row: HTMLTableRowElement, index?: number | undefined, opts?: StringOrNodeOrArray | ElementEditableObject<HTMLTableCellElement, 'colSpan' | 'headers' | 'rowSpan' | 'scope'>) {
-    return insertAt( row, index, element('td', opts) )
+export function insertCell(row: HTMLTableRowElement, index?: number | undefined, opts?: CreateElementOptions.ForChildrened<HTMLTableCellElement, 'colSpan' | 'headers' | 'rowSpan' | 'scope'>) {
+    return insertAt(row, index, opts instanceof HTMLTableCellElement ? opts : element('td', opts))
 }
 
 /**
@@ -163,89 +187,116 @@ export function createTooltip<T extends HTMLElement>(base: HTMLElement, tooltip:
     return tooltip
 }
 
-function* childrens(opts?: StringOrNodeOrArray | ElementEditableObject) {
-    if (opts instanceof Array) {
-        for (const d of opts)
-            yield typeof d === 'string' ? createText(d) : d
-    }
-    else if (opts instanceof Node) {
-        yield opts
-    }
-    else if (typeof opts === 'string') {
-        yield createText(opts)
-    }
-    else if (opts?.childrens) {
-        for (const d of opts.childrens)
-            yield typeof d === 'string' ? createText(d) : d
-    }
+const ignoredKeys = {
+    attributes: null,
+    classes: null,
+    dataset: null,
+    styles: null,
+    childrens: null,
+    on: null,
 }
 
-/**
- * String, or a Node, or an array of those.
- * Mostly used for element children type
- */
-export type StringOrNodeOrArray = string | Node | (string | Node)[]
+function isChildren(n: any): n is Node | string | Iterable<any> {
+    return n instanceof Node || typeof n === 'string' || typeof n === 'object' && Symbol.iterator in n
+}
 
-/** Editable HTML element properties, in form of object */
-export type ElementEditableObject<T extends HTMLElement = HTMLElement, K extends keyof T = never> = (
-    Partial<
-        Pick<
-            T,
-            | "accessKey"
-            | "autocapitalize"
-            | "dir"
-            | "draggable"
-            | "hidden"
-            | "inert"
-            | "innerText"
-            | "lang"
-            | "id"
-            | "outerHTML"
-            | "outerText"
-            | "innerHTML"
-            | "innerText"
-            | "className"
-            | "textContent"
-            | K
-        >
-    >
-    & Partial<{
-        [x: string]: any
+export declare namespace CreateElementOptions {
+    type For<E extends ElementType = HTMLElement, P extends keyof E = E extends HTMLElement ? HTMLGlobalProperties : GlobalProperties>
+        = Partial<Readonly<
+            CustomOptions
+            & Pick<E, P>
+            & Record<string, any>
+        >>
+    
+    type ForChildrened<E extends ElementType = HTMLElement, P extends keyof E = E extends HTMLElement ? HTMLGlobalProperties : GlobalProperties>
+        = For<E, P> | ChildrenOption
+
+    type GlobalProperties =
+        | 'autofocus'
+        | 'id'
+        | 'nonce'
+        | 'part'
+        | 'tabIndex'
+        | 'innerHTML'
+        | 'outerHTML'
+        | 'textContent'
+    
+    type HTMLGlobalProperties =
+        | GlobalProperties
+        | 'accessKey'
+        | 'autocapitalize'
+        | 'contentEditable'
+        | 'dir'
+        | 'draggable'
+        | 'enterKeyHint'
+        | 'hidden'
+        | 'inert'
+        | 'inputMode'
+        | 'lang'
+        | 'spellcheck'
+        | 'title'
+        | 'translate'
+        | 'innerText'
+        | 'outerText'
+
+    interface CustomOptions {
+        /**
+         * Element attributes init
+         * 
+         * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/attributes)
+         * 
+         * See {@link Element.attributes}
+         */
+        attributes: ReadonlyRecordOrIterable<string, string>
 
         /**
-         * Element classes.
-         * Can be a string, or an iterable of it
+         * Element CSS classes init,
+         * can be a single string for a single class
+         * 
+         * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/classList)
+         * 
+         * See {@link Element.classList}
          */
-        classes: string | Iterable<string>
+        classes: OrIterable<string>
 
         /**
-         * Element childrens.
-         * Must be an iterable of strings or nodes
+         * Element dataset init
+         * 
+         * [MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/dataset)
+         * 
+         * See {@link HTMLOrSVGElement.dataset}
          */
-        childrens: Iterable<Node | string>
+        dataset: ReadonlyRecordOrIterable<string, string>
 
         /**
-         * Element styles.
-         * Can be an object whose key is style property and value is style value,
-         * or an iterable pair
+         * Element CSS styles init
+         * 
+         * [MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/style)
+         * 
+         * See {@link ElementCSSInlineStyle.style}
          */
-        styles: RecordOrIterable<string, string>
+        styles: ReadonlyRecordOrIterable<string, string>
 
         /**
-         * Element datas.
-         * Must be an object
+         * Element childrens
          */
-        datas: Record<string, string>
+        childrens: ChildrenOption
 
         /**
          * Element listeners
          */
-        on: {
-            [K in string]: ( (<T extends Event>(ev: T) => any) )
-                | {
-                    listener: <T extends Event>(ev: T) => any
-                    options?: AddEventListenerOptions
-                }
-        }
-    }>
-)
+        on: { [K in string]: ListenerOption<K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : Event> }
+
+        /**
+         * Tag name of a custom element
+         */
+        is: string
+    }
+
+    type ListenerOption<T extends Event> = { (ev: T): any } | Readonly< AddEventListenerOptions & { listener(ev: T): any } >
+    type ChildrenOption<T extends Node = Node> = OrIterable<string | T>
+    type ElementType = Element & HTMLOrSVGElement & ElementCSSInlineStyle
+}
+
+type CreateElementOptions = CreateElementOptions.For
+type CreateElementOptionsChildrened = CreateElementOptions.ForChildrened

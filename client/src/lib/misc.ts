@@ -15,9 +15,15 @@ export function abortTimeout(timeout: number) {
  * @param b Source
  * @param ignores Properties to be ignored
  */
-export function assignIfExist<A extends object, B, I extends string = never>(a: A, b: B, ignores: Array<I> | Set<I> = []): Replace<A, Pick<B, Exclude<keyof A & keyof B, I>>> {
+export function assignIfExist<A extends object, B, I extends string = never>(a: A, b: B, ignores: ReadonlyArray<I> | ReadonlySet<I> | ReadonlyMap<I, any> | ReadonlyRecord<I, any> = []): Replace<A, Pick<B, Exclude<keyof A & keyof B, I>>> {
+    const ignoreTest: (v: I) => boolean =
+        ignores instanceof Array ? ignores.includes.bind(ignores)
+        : ignores instanceof Set || ignores instanceof Map ? ignores.has.bind(ignores)
+        : v => v in ignores
+
     //@ts-ignore
-    for (const k in b) if (k in a && !( Array.isArray(ignores) ? ignores.includes(k) : ignores.has(k) )) a[k] = b[k]
+    for (const k in b) if (k in a && !ignoreTest(k)) a[k] = b[k]
+    
     return a as any
 }
 
@@ -109,4 +115,25 @@ export function* iterateLength<T extends { readonly length: number, item(index: 
         const item = src.item(i)
         yield item
     }
+}
+
+/**
+ * Iterates an iterable / non-iterable
+ * 
+ * @param orIterable Iterable / non-iterable
+ *  - If it's iterable, will iterate as usual
+ *  - If it's non-iterable, will only yield once (the value)
+ */
+export function* iterateOr<T>(orIterable: OrIterable<T>): Generator<T, void, any> {
+    if (typeof orIterable === 'object' && orIterable && Symbol.iterator in orIterable) yield* orIterable
+    else yield orIterable
+}
+
+/**
+ * Iterates an object
+ * @param recordOrIterable Object / iterable object
+ */
+export function* iterateRecord<K extends PropertyKey, V>(recordOrIterable: ReadonlyRecordOrIterable<K, V>): Generator<readonly [K, V], void, any> {
+    if (Symbol.iterator in recordOrIterable) yield* recordOrIterable
+    else for (const k in recordOrIterable) yield [k, recordOrIterable[k]]
 }

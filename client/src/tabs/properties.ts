@@ -1,7 +1,7 @@
 import init from "../init.js";
 import { createTable, element, insertRow } from "../lib/element.js";
 import { uninspectJSON } from "../lib/json_uninspector.js";
-import { getIdThrow } from "../lib/misc.js";
+import { getIdThrow, iterateRecord } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
 import { sendEvalThrowable } from "../util.js";
 
@@ -49,7 +49,7 @@ export class PropertiesTable {
         this.tbody = this.table.tBodies.item(0) ?? this.table.createTBody()
 
         if (properties) 
-            for (const [key, data] of properties[Symbol.iterator]?.() ?? Object.entries(properties))
+            for (const [key, data] of iterateRecord(properties))
                 this.register(key, data)
 
         this.entityId = entityId
@@ -83,7 +83,7 @@ export class PropertiesTable {
                     on: {
                         click: {
                             listener: () => this.sendUpdate(key, value),
-                            options: { once: true }
+                            once: true
                         }
                     }
                 }),
@@ -92,7 +92,7 @@ export class PropertiesTable {
                     on: {
                         click: {
                             listener: () => elmValue.replaceChildren(elementValue(v.value)),
-                            options: { once: true }
+                            once: true
                         }
                     }
                 })
@@ -305,9 +305,7 @@ export class PropertiesTable {
                                 cnt.remove()
                                 delete trackList[id]
                             },
-                            options: {
-                                once: true
-                            }
+                            once: true
                         }
                     }
                 }),
