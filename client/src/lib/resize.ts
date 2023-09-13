@@ -12,7 +12,7 @@ export function handleResize(resizer: HTMLElement, target: HTMLElement, horizont
             signal: abort.signal
         })
 
-        resizer.addEventListener('pointercancel', () => abort.abort('pointercancel'), { once: true, signal: abort.signal })
-        resizer.addEventListener('pointerup', () => abort.abort('pointerup'), { once: true, signal: abort.signal })
+        document.addEventListener('pointercancel', () => abort.abort('pointercancel'), { once: true, signal: abort.signal })
+        document.addEventListener('pointerup', () => abort.abort('pointerup'), { once: true, signal: abort.signal })
     })
 }
