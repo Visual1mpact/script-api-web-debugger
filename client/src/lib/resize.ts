@@ -11,7 +11,8 @@ export function handleResize(resizer: HTMLElement, target: HTMLElement, horizont
         }, {
             signal: abort.signal
         })
-
+        
+        document.addEventListener('selectstart', ev => ev.preventDefault(), { signal: abort.signal })
         document.addEventListener('pointercancel', () => abort.abort('pointercancel'), { once: true, signal: abort.signal })
         document.addEventListener('pointerup', () => abort.abort('pointerup'), { once: true, signal: abort.signal })
     })
