@@ -50,7 +50,7 @@ export namespace NProfiler {
 
             // ticks
             const { endTime, startTime } = intResult
-            intResult.ticks = _ticks.slice( _ticks.findIndex(({ time }) => time > startTime), _ticks.findLastIndex(({ time }) => time < endTime) + 1 )
+            intResult.ticks = _ticks.slice( _ticks.findIndex(({ time }) => time >= startTime), _ticks.findLastIndex(({ time }) => time <= endTime) + 1 )
             _ticks = []
 
             _promise.resolve(intResult)
