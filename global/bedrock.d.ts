@@ -54,6 +54,7 @@ declare namespace Bedrock {
         tick: {
             tick: number
             delta: number
+            time: number
         }
 
         console: {
@@ -93,6 +94,48 @@ declare namespace Bedrock {
         id: string,
         result: JSONInspect.All,
         error: boolean
+    }
+
+    namespace Profiler {
+        interface CallFrame {
+            functionName: string
+            scriptId: string
+            url: string
+            lineNumber: number
+            columnNumber: number
+        }
+
+        interface Profiler {
+            nodes: {
+                id: number
+                hitCount: number
+                callFrame: CallFrame
+                children?: number[]
+                locationId: number
+            }[]
+
+            samples: number[]
+            timeDeltas: number[]
+
+            startTime: number
+            endTime: number
+
+            '$vscode': {
+                rootPath: string
+                locations: {
+                    callFrame: CallFrame
+                    location: {
+                        lineNumber: number
+                        columnNumber: number
+                        source: {
+                            name: string
+                            path: string
+                            sourceReference: number
+                        }
+                    }[]
+                }[]
+            }
+        }
     }
 
     type T_DynamicPropertyData = {

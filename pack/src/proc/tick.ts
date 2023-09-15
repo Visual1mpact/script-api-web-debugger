@@ -9,6 +9,7 @@ run.internals.runInterval(() => {
 
     Debugger.send('tick', {
         delta,
+        time: curTime,
         tick: system.currentTick
     })
 })
