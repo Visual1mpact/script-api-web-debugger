@@ -1,4 +1,6 @@
+import fsp = require('fs/promises')
 import NBedrock from "./bedrock.js"
+import { port } from "./server.js"
 
 export namespace NInterpreterConfig {
     export let processConsoleLogLimit = 400
@@ -39,7 +41,53 @@ function pushToLimit<T>(arr: T[], value: T, limit: number) {
     if (arr.length > limit) arr.shift()
 }
 
-NBedrock.events.addListener('line', data => pushToLimit(NInterpreter.processConsoleLogList, data, NInterpreterConfig.processConsoleLogLimit))
+NBedrock.events.prependListener('line', data => {
+    let silent = false
+
+    // interpret console
+    if (data.level === 'info') {
+        const { line } = data
+        silent = true
+        let lineMatch: RegExpMatchArray | null
+
+        // bedrock event
+        if (lineMatch = line.match(/^SCRIPTDATA:---(.*?)---:(.*)/)) {
+            const [, name = '', datastr = ''] = lineMatch
+            const data = JSON.parse(datastr === 'undefined' ? 'null' : datastr)
+
+            // special case: ready
+            if (name === 'ready')
+                NBedrock.sendScriptData('handshake', port)
+
+            //@ts-ignore
+            NBedrock.events.emit('data', { name, data })
+            NBedrock.bedrockEvents.emit(name as any, data)
+        }
+
+        // script event send
+        else if (lineMatch = line.match(/^Script event debug:\w+ has been sent/)) {}
+
+        // script stats receive
+        else if (lineMatch = line.match(/^Script stats saved to '(.*)'/)) {
+            const [, loc = ''] = lineMatch
+
+            fsp.readFile(loc).then(
+                buf => {
+                    NBedrock.events.emit('runtime_stats', JSON.parse(buf.toString()))
+                    fsp.rm(loc, { force: true })
+                },
+                () => {}
+            )
+        }
+
+        else silent = false
+    }
+
+    // push
+    if (!data.silent && !silent) pushToLimit(NInterpreter.processConsoleLogList, data, NInterpreterConfig.processConsoleLogLimit)
+    else data.silent = true
+})
+
 NBedrock.events.addListener('data', ev => {
     switch (ev.name) {
         case 'ready': {

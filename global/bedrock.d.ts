@@ -104,37 +104,37 @@ declare namespace Bedrock {
             lineNumber: number
             columnNumber: number
         }
+    }
 
-        interface Profiler {
-            nodes: {
-                id: number
-                hitCount: number
-                callFrame: CallFrame
-                children?: number[]
-                locationId: number
-            }[]
+    interface Profiler {
+        nodes: {
+            id: number
+            hitCount: number
+            callFrame: Profiler.CallFrame
+            children?: number[]
+            locationId: number
+        }[]
 
-            samples: number[]
-            timeDeltas: number[]
+        samples: number[]
+        timeDeltas: number[]
 
-            startTime: number
-            endTime: number
+        startTime: number
+        endTime: number
 
-            '$vscode': {
-                rootPath: string
-                locations: {
-                    callFrame: CallFrame
-                    location: {
-                        lineNumber: number
-                        columnNumber: number
-                        source: {
-                            name: string
-                            path: string
-                            sourceReference: number
-                        }
-                    }[]
+        '$vscode': {
+            rootPath: string
+            locations: {
+                callFrame: Profiler.CallFrame
+                location: {
+                    lineNumber: number
+                    columnNumber: number
+                    source: {
+                        name: string
+                        path: string
+                        sourceReference: number
+                    }
                 }[]
-            }
+            }[]
         }
     }
 

@@ -1,13 +1,12 @@
 import crypto = require('crypto')
 import cp = require('child_process')
 import express = require('express')
-import fsp = require('fs/promises')
 import path = require('path')
 import rl = require('readline')
 
 import TypedEventEmitter from './lib/typedevm.js'
 import PromiseController from './lib/promisectrl.js'
-import { port, server } from './server.js'
+import { server } from './server.js'
 
 let { BDSTARGET: _bdsTarget = '' } = process.env
 _bdsTarget = _bdsTarget.slice(1, -1)
@@ -70,56 +69,19 @@ namespace NBedrock {
     const lineInt = rl.createInterface(childProcess.stdout)
     lineInt.on('line', raw => {
         let rawMatch: RegExpMatchArray | null
-        if (rawMatch = raw.match(/\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}:\d{3}) ([A-Z]+)\] (.*)/)) { // known
+        if (rawMatch = raw.match(/\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}:\d{3}) ([A-Z]+)\] (.*)/)) {
             const [, date = '', time = '', level = '', line = ''] = rawMatch
-            let lineMatch: RegExpMatchArray | null
-
-            // bedrock event
-            if (lineMatch = line.match(/SCRIPTDATA:---(.*?)---:(.*)/)) {
-                const [, name = '', datastr = ''] = lineMatch
-                const data = JSON.parse(datastr === 'undefined' ? 'null' : datastr)
-
-                // special case: ready
-                if (name === 'ready')
-                    NBedrock.sendScriptData('handshake', port)
-
-                //@ts-ignore
-                NBedrock.events.emit('data', { name, data })
-                NBedrock.bedrockEvents.emit(name as any, data)
-            }
-
-            // script event send
-            else if (lineMatch = line.match(/Script event debug:\w+ has been sent/)) {}
-
-            // script stats receive
-            else if (lineMatch = line.match(/Script stats saved to '(.*)'/)) {
-                const [, loc = ''] = lineMatch
-
-                fsp.readFile(loc).then(
-                    buf => {
-                        events.emit('runtime_stats', JSON.parse(buf.toString()))
-                        fsp.rm(loc, { force: true })
-                    },
-                    () => {}
-                )
-            }
-
-            // bedrock normal line
-            else  {
-                NBedrock.events.emit('line', {
-                    level: logLevelEnum[level] ?? 'log',
-                    date,
-                    time,
-                    line,
-                    raw
-                })
-            }
+            NBedrock.events.emit('line', {
+                level: logLevelEnum[level] ?? 'log',
+                date, time, line, raw,
+                silent: true
+            })
         }
-        // unknown
         else if (raw) {
             NBedrock.events.emit('line', {
                 level: 'unknown',
-                raw
+                raw,
+                silent: false
             })
         }
     })

@@ -17,15 +17,16 @@ declare namespace NodeBedrock {
 
     interface Events {
         line: {
+            raw: string
+            silent: boolean
+        } & ({
             level: LogLevel
             date: string
             time: string
             line: string
-            raw: string
         } | {
             level: 'unknown'
-            raw: string
-        }
+        })
 
         runtime_stats: {
             plugins: {
