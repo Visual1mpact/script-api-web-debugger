@@ -99,7 +99,7 @@ const ssech = sse.createChannel()
 server.get('/listen', async (req, res) => ssech.register(await sse.createSession(req, res)))
 
 NBedrock.events.addListener('data', v => ssech.broadcast(v, 'data'))
-NBedrock.events.addListener('line', v => ssech.broadcast(v, 'line'))
+NBedrock.events.addListener('line', v => { if (!v.silent) ssech.broadcast(v, 'line') })
 NBedrock.events.addListener('runtime_stats', v => ssech.broadcast(v, 'runtime_stats'))
 NBedrock.events.addListener('exit', v => ssech.broadcast(v, 'exit'))
 

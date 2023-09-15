@@ -55,7 +55,12 @@ export namespace NProfiler {
             const { endTime, startTime } = intResult
             intResult.ticks = _ticks.slice( _ticks.findIndex(({ time }) => time > startTime), _ticks.findLastIndex(({ time }) => time < endTime) + 1 )
             _ticks = []
+
+            // resolve
+            _promise.resolve(intResult)
         })
+
+        return promise
     }
 
     export function stop() {
@@ -64,6 +69,8 @@ export namespace NProfiler {
         // stop
         NBedrock.send('script profiler stop')
         started = false
+
+        return promise
     }
 }
 
