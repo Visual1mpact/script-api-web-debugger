@@ -74,7 +74,7 @@ namespace NBedrock {
             NBedrock.events.emit('line', {
                 level: logLevelEnum[level] ?? 'log',
                 date, time, line, raw,
-                silent: true
+                silent: false
             })
         }
         else if (raw) {

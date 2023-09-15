@@ -104,7 +104,7 @@ NBedrock.events.prependListener('line', data => {
         let lineMatch: RegExpMatchArray | null
 
         // bedrock event
-        if (lineMatch = line.match(/^SCRIPTDATA:---(.*?)---:(.*)/)) {
+        if (lineMatch = line.match(/SCRIPTDATA:---(.*?)---:(.*)/)) {
             const [, name = '', datastr = ''] = lineMatch
             const data = JSON.parse(datastr === 'undefined' ? 'null' : datastr)
 

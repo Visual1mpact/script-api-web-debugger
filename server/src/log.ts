@@ -11,6 +11,8 @@ const levelsFlag = {
 }
 
 NBedrock.events.on('line', data => {
+    if (data.silent) return
+    
     if (data.level === 'unknown') {
         console.log(levelsFlag.unknown, data.raw)
     } else {
