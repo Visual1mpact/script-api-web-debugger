@@ -126,4 +126,8 @@ declare namespace NodeBedrock {
             isSuspended: boolean
         }
     }
+
+    interface Profiler extends Bedrock.Profiler {
+        ticks: Bedrock.Events['tick'][]
+    }
 }

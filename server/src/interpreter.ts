@@ -1,6 +1,7 @@
 import fsp = require('fs/promises')
 import NBedrock from "./bedrock.js"
 import { port } from "./server.js"
+import PromiseController from './lib/promisectrl.js'
 
 export namespace NInterpreterConfig {
     export let processConsoleLogLimit = 400
@@ -13,6 +14,57 @@ export namespace NInterpreterConfig {
 
     export let systemRunsAutoclearThreshold = 100
     export let systemRunsAutoclearList = new Set<number>()
+}
+
+export namespace NProfiler {
+    export let _bedrockResult: Bedrock.Profiler | undefined
+    export let _promise = new PromiseController<NodeBedrock.Profiler>()
+    export let _ticks: Bedrock.Events['tick'][] = []
+
+    export let started = false
+    export let promise = _promise.promise
+
+    export function start() {
+        if (started) return promise
+
+        // start
+        NBedrock.send('script profiler start')
+        started = true
+
+        // refresh
+        const np = new PromiseController<NodeBedrock.Profiler>()
+        _promise.resolve(np.promise)
+        _promise = np
+
+        // tick
+        NBedrock.bedrockEvents.addListener('tick', function self({ delta, tick, time }) {
+            delta *= 1000
+            time *= 1000
+
+            // tick
+            if (!_bedrockResult || _bedrockResult.endTime > time) return _ticks.push({ delta, tick, time })
+
+            // unsubscribe
+            NBedrock.bedrockEvents.removeListener('tick', self)
+
+            // result
+            const intResult = _bedrockResult as NodeBedrock.Profiler
+            _bedrockResult = undefined
+
+            // ticks
+            const { endTime, startTime } = intResult
+            intResult.ticks = _ticks.slice( _ticks.findIndex(({ time }) => time > startTime), _ticks.findLastIndex(({ time }) => time < endTime) + 1 )
+            _ticks = []
+        })
+    }
+
+    export function stop() {
+        if (!started) return promise
+
+        // stop
+        NBedrock.send('script profiler stop')
+        started = false
+    }
 }
 
 namespace NInterpreter {
@@ -32,8 +84,9 @@ namespace NInterpreter {
     }
 
     export let systemRuns = new Map<number, NodeBedrock.Interpreter.SystemRun>()
-
+    
     export const Config = NInterpreterConfig
+    export const Profiler = NProfiler
 }
 
 function pushToLimit<T>(arr: T[], value: T, limit: number) {
@@ -73,7 +126,20 @@ NBedrock.events.prependListener('line', data => {
 
             fsp.readFile(loc).then(
                 buf => {
-                    NBedrock.events.emit('runtime_stats', JSON.parse(buf.toString()))
+                    NBedrock.events.emit('runtime_stats', JSON.parse(buf as unknown as string))
+                    fsp.rm(loc, { force: true })
+                },
+                () => {}
+            )
+        }
+
+        // profiler stop
+        else if (lineMatch = line.match(/^Profiler stopped\. Profile saved to '(.*\.cpuprofile)'/)) {
+            const [, loc = ''] = lineMatch
+
+            fsp.readFile(loc).then(
+                buf => {
+                    NProfiler._bedrockResult = JSON.parse(buf as unknown as string)
                     fsp.rm(loc, { force: true })
                 },
                 () => {}
