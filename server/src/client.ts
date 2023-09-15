@@ -4,7 +4,7 @@ import sse = require('better-sse')
 
 import { server } from "./server.js";
 import NBedrock from './bedrock.js';
-import NInterpreter, { NInterpreterConfig } from './interpreter.js';
+import NInterpreter, { NInterpreterConfig, NProfiler } from './interpreter.js';
 
 server.get('/', (req, res) => res.redirect('/app'))
 server.use('/app', express.static('../client/app', { index: 'main.html' }))
@@ -39,7 +39,9 @@ server.get('/client/data', (req, res) => {
                 entities: entitiesInitProps
             },
             worldProperties: worldProps,
-            states: states
+            states: states,
+
+            profiling: NProfiler.started
         },
 
         limits: {
@@ -75,11 +77,6 @@ server.post('/client/send_data/:name',
     }
 )
 
-server.post('/client/kill', (req, res) => {
-    NBedrock.childProcess.kill()
-    res.end()
-})
-
 server.post('/client/send_eval',
     express.json({ type: 'application/json' }),
     
@@ -93,6 +90,26 @@ server.post('/client/send_eval',
         res.send(data).end()
     }
 )
+
+server.post('/client/profiler/start', (req, res) => {
+    NProfiler.start()
+    res.end()
+})
+
+server.post('/client/profiler/stop', async (req, res) => {
+    res.json(await NProfiler.stop())
+})
+
+server.get('/client/profiler/latest', async (req, res) => {
+    try { res.json(await NProfiler.promise) }
+    catch { res.status(404).end() }
+})
+
+server.post('/client/kill', (req, res) => {
+    NBedrock.childProcess.kill()
+    res.end()
+})
+
 
 
 const ssech = sse.createChannel()

@@ -5,8 +5,9 @@ export default class PromiseController<T = any> {
         return prm
     }
 
-    static reject<T = any>(err?: any) {
+    static reject<T = any>(err?: any, handle = true) {
         const prm = new PromiseController<T>()
+        if (handle) prm.promise.catch(() => {})
         prm.reject(err)
         return prm
     }

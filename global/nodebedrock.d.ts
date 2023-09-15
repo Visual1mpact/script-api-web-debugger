@@ -86,6 +86,7 @@ declare namespace NodeBedrock {
             propertyRegistry: Pick<Bedrock.Events['property_registry'], 'entities' | 'world'>
             worldProperties: Record<string, Bedrock.T_DynamicPropertyValue>
             states: Record<string, Bedrock.T_DynamicPropertyValue>
+            profiling: boolean
         }
 
         limits: {

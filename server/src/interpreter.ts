@@ -18,7 +18,7 @@ export namespace NInterpreterConfig {
 
 export namespace NProfiler {
     export let _bedrockResult: Bedrock.Profiler | undefined
-    export let _promise = new PromiseController<NodeBedrock.Profiler>()
+    export let _promise = PromiseController.reject<NodeBedrock.Profiler>(null, true)
     export let _ticks: Bedrock.Events['tick'][] = []
 
     export let started = false
@@ -31,10 +31,9 @@ export namespace NProfiler {
         NBedrock.send('script profiler start')
         started = true
 
-        // refresh
-        const np = new PromiseController<NodeBedrock.Profiler>()
-        _promise.resolve(np.promise)
-        _promise = np
+        // promise
+        _promise = new PromiseController<NodeBedrock.Profiler>()
+        promise = _promise.promise
 
         // tick
         NBedrock.bedrockEvents.addListener('tick', function self({ delta, tick, time }) {
@@ -43,8 +42,6 @@ export namespace NProfiler {
 
             // tick
             if (!_bedrockResult || _bedrockResult.endTime > time) return _ticks.push({ delta, tick, time })
-
-            // unsubscribe
             NBedrock.bedrockEvents.removeListener('tick', self)
 
             // result
@@ -56,7 +53,6 @@ export namespace NProfiler {
             intResult.ticks = _ticks.slice( _ticks.findIndex(({ time }) => time > startTime), _ticks.findLastIndex(({ time }) => time < endTime) + 1 )
             _ticks = []
 
-            // resolve
             _promise.resolve(intResult)
         })
 
