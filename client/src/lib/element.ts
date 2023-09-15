@@ -39,8 +39,8 @@ export function applyOptions<E extends CreateElementOptions.ElementType>(element
         element.classList.add(...iterateOr(opts.classes))
 
     // apply datasets
-    if (opts.dataset)
-        for (const [k, v] of iterateRecord(opts.dataset))
+    if (opts.datas)
+        for (const [k, v] of iterateRecord(opts.datas))
             element.dataset[k] = v
     
     // apply styles
@@ -96,7 +96,7 @@ export function createTable(tableOptions: TableOptions) {
                 delete opts.childrens
             }
             
-            applyOptions(section, opts)
+            applyOptions(section, opts as never)
         }
 
         if (childrens) {
@@ -122,7 +122,7 @@ export function createTable(tableOptions: TableOptions) {
 }
 
 type TableKeys = 'thead' | 'tbody' | 'tfoot'
-type TableSectionInit = OrIterable<CreateElementOptions.ChildrenOption> | MutableSome<CreateElementOptions, 'childrens'>
+type TableSectionInit = OrIterable<CreateElementOptions.ChildrenOption> | Replace<CreateElementOptions, { childrens?: OrIterable<CreateElementOptions.ChildrenOption> }>
 
 type TableOptions =
     & CreateElementOptions
@@ -266,7 +266,7 @@ export declare namespace CreateElementOptions {
          * 
          * See {@link HTMLOrSVGElement.dataset}
          */
-        dataset: ReadonlyRecordOrIterable<string, string>
+        datas: ReadonlyRecordOrIterable<string, string>
 
         /**
          * Element CSS styles init
