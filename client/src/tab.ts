@@ -9,6 +9,7 @@ import './tabs/event.js'
 import './tabs/properties.js'
 import './tabs/runs.js'
 import './tabs/stats.js'
+import './tabs/profiler.js'
 
 // initialize tabs
 

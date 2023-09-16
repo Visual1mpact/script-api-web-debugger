@@ -14,6 +14,7 @@
             @import url('styles/tabs/properties.css');
             @import url('styles/tabs/events.css');
             @import url('styles/tabs/runs.css');
+            @import url('styles/tabs/profiler.css');
 
             @import url('styles/inspector.css');
             @import url('styles/main.css');
@@ -407,7 +408,14 @@
             </div>
 
             <!-- Tab: Profiler -->
-            <div id="tab-profiler" data-tab="profiler" class="noflow" hidden>
+            <div id="tab-profiler" data-tab="profiler" class="flow-y flex-col" hidden>
+                <div id="prf-result" class="fill flex-col">
+                    <div id="prf-tl-cnt">
+                        <div id="prf-tl" class="flex-row fill">
+                        </div>
+                    </div>
+                    <div id="prf-data" class="fill"></div>
+                </div>
             </div>
         </div>
     </body>

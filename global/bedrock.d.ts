@@ -97,6 +97,18 @@ declare namespace Bedrock {
     }
 
     namespace Profiler {
+        interface Node {
+            id: number
+            hitCount: number
+            callFrame: Profiler.CallFrame
+            children?: number[]
+            locationId: number
+        }
+
+        interface NodeChildrened extends Node {
+            children: number[]
+        }
+        
         interface CallFrame {
             functionName: string
             scriptId: string
@@ -107,13 +119,7 @@ declare namespace Bedrock {
     }
 
     interface Profiler {
-        nodes: {
-            id: number
-            hitCount: number
-            callFrame: Profiler.CallFrame
-            children?: number[]
-            locationId: number
-        }[]
+        nodes: Profiler.Node[]
 
         samples: number[]
         timeDeltas: number[]

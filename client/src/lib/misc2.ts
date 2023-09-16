@@ -19,12 +19,18 @@ export function transformColor<T extends [] | number[]>(from: T, to: T, rate: nu
  * @param c2 Color target
  * @param max Max value, defaults to `100`
  * @param min Min value, defaults to `0`
+ * @param bgColor Background color
+ * @param direction Direction
  * @returns 
  */
-export function valueBar(value: number, c1: RGB, c2: RGB, max = 100, min = 0) {
+export function valueBar(value: number, c1: RGB, c2: RGB, max = 100, min = 0, bgColor = 'transparent', direction: 'left' | 'right' | 'bottom' | 'top' = 'right') {
     const rate = (value - min) / (max - min)
     const [r, g, b] = transformColor(c1, c2, rate)
-    return `linear-gradient(to right, rgba(${r}, ${g}, ${b}, ${0.5+rate/2}) ${rate * 100}%, transparent 0%)`
+    return `linear-gradient(to ${direction}, rgba(${r}, ${g}, ${b}, ${0.5+rate/2}) ${rate * 100}%, ${bgColor} 0%)`
+}
+
+export function valueBarCreator(c1: RGB, c2: RGB, max?: number, min?: number, bgColor?: string, direction?: 'left' | 'right' | 'bottom' | 'top') {
+    return (value: number) => valueBar(value, c1, c2, max, min, bgColor, direction)
 }
 
 export function stableAverage(arr: number[], defaultZero = NaN) {

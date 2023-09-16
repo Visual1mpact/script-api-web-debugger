@@ -1,0 +1,40 @@
+#prf-tl-cnt {
+    min-height: 80px;
+    height: 80px;
+    overflow-x: scroll;
+}
+
+#prf-tl > .boundary {
+    min-width: 2px;
+    margin: 4px;
+    background: white;
+}
+
+#prf-tl > :not(.boundary) {
+    background: rgba(0, 192, 255, 0.2);
+    cursor: pointer;
+    display: flex;
+}
+
+#prf-tl > :not(.boundary):hover { background: rgba(0, 192, 255, 0.3); }
+
+#prf-tl > :not(.boundary) > .marker {
+    min-width: 8px;
+    background: rgba(255, 255, 0, 0.3);
+}
+
+#prf-tl > :not(.boundary) > .marker > div {
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+}
+
+#prf-data {
+    font-family: monospace;
+    font-size: 1.2em;
+}
+
+#prf-data table > tbody > tr > td.delay {
+    background: var(--bg-strong);
+    text-align: center;
+}

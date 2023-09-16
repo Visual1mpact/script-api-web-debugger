@@ -137,3 +137,11 @@ export function* iterateRecord<K extends PropertyKey, V>(recordOrIterable: Reado
     if (Symbol.iterator in recordOrIterable) yield* recordOrIterable
     else for (const k in recordOrIterable) yield [k, recordOrIterable[k]]
 }
+
+/**
+ * Returns a promise that resolves after specified milliseconds
+ * @param ms Number of milliseconds to wait
+ */
+export async function sleep(ms: number) {
+    return new Promise<void>(res => setTimeout(res, ms))
+}
