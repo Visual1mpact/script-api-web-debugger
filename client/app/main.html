@@ -146,12 +146,13 @@
             <!-- Tab: eval -->
             <div id="tab-eval" data-tab="eval" class="noflow" hidden>
                 <div id="eval-list" class="flow-y"></div>
+                
                 <div id="eval-resize"></div>
                 <textarea id="eval-input" class="code" placeholder="enter a code, press CTRL+ENTER to evaluate" spellcheck="false"></textarea>
                 <div id="eval-side">
                     <button id="eval-send">evaluate</button><br>
-                    <input type="checkbox" id="eval-o-keep" checked><span>keep output</span><br>
-                    <input type="checkbox" id="eval-o-async"><span>async mode</span><br>
+                    <input type="checkbox" id="eval-o-keep" checked><span title="keeps eval output in $_">keep output</span><br>
+                    <input type="checkbox" id="eval-o-async"><span title="allows await keyword - requires return keyword to get the value">async mode</span><br>
                 </div>
             </div>
 
