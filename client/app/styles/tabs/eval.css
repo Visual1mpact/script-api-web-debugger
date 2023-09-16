@@ -3,7 +3,7 @@
     grid-template-areas:
         'list list'
         'res res'
-        'input send'
+        'input side'
     ;
     grid-template-rows: 1fr auto auto;
     grid-template-columns: 1fr auto;
@@ -58,7 +58,7 @@
     resize: none;
 }
 
-#eval-send {
-    grid-area: send;
+#eval-side {
+    grid-area: side;
     align-self: center;
 }

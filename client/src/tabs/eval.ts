@@ -9,6 +9,9 @@ const input = getIdThrow('eval-input', HTMLTextAreaElement)
 const send = getIdThrow('eval-send', HTMLButtonElement)
 const resize = getIdThrow('eval-resize')
 
+const optsKeep = getIdThrow('eval-o-keep', HTMLInputElement)
+const optsAsync = getIdThrow('eval-o-async', HTMLInputElement)
+
 export async function sendInput(value: string) {
     let retElm, resElm
     const elm = element('div', {
@@ -62,7 +65,7 @@ export async function sendInput(value: string) {
     list.append(elm)
 
     try {
-        const data = await sendEval(value)
+        const data = await sendEval(value, optsKeep.checked, optsAsync.checked)
 
         retElm.style.color = data.error ? 'lightcoral' : 'lime'
         resElm.append(uninspectJSONToElement(data.result))

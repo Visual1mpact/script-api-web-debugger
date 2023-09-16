@@ -4,6 +4,7 @@ declare namespace NodeBedrock {
             id: string
             script: string
             keepOutput?: boolean
+            async?: boolean
         }
 
         set_state: {

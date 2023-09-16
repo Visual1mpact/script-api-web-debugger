@@ -6,7 +6,7 @@ import { fetchThrow } from "./lib/misc.js";
  * @param keepOutput Tells the script API to keep the eval output (`$_`)
  * @returns Eval result
  */
-export async function sendEval(script: string, keepOutput = true) {
+export async function sendEval(script: string, keepOutput = true, async = false) {
     const res = await fetchThrow('/client/send_eval', {
         method: 'POST',
         headers: {
@@ -14,7 +14,8 @@ export async function sendEval(script: string, keepOutput = true) {
         },
         body: JSON.stringify({
             script,
-            keepOutput
+            keepOutput,
+            async
         })
     })
 
@@ -27,8 +28,8 @@ export async function sendEval(script: string, keepOutput = true) {
  * @param keepOutput Tells the script API to keep the eval output (`$_`)
  * @returns Eval result
  */
-export async function sendEvalThrowable(script: string, keepOutput = false) {
-    const res = await sendEval(script, keepOutput)
+export async function sendEvalThrowable(script: string, keepOutput = false, async = false) {
+    const res = await sendEval(script, keepOutput, async)
     if (res.error) throw new EvalError('Eval failed', { cause: res })
     return res
 }

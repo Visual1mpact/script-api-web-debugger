@@ -148,7 +148,11 @@
                 <div id="eval-list" class="flow-y"></div>
                 <div id="eval-resize"></div>
                 <textarea id="eval-input" class="code" placeholder="enter a code, press CTRL+ENTER to evaluate" spellcheck="false"></textarea>
-                <button id="eval-send">eval</button>
+                <div id="eval-side">
+                    <button id="eval-send">evaluate</button><br>
+                    <input type="checkbox" id="eval-o-keep" checked><span>keep output</span><br>
+                    <input type="checkbox" id="eval-o-async"><span>async mode</span><br>
+                </div>
             </div>
 
             <!-- Tab: events -->

@@ -31,14 +31,15 @@ namespace NBedrock {
         childProcess.stdin.write('\r\n')
     }
 
-    export async function sendEval(script: string, keepOutput = true) {
+    export async function sendEval(script: string, keepOutput = true, async = true) {
         const id = crypto.randomUUID()
         const prm = new PromiseController<Bedrock.EvalResult>()
 
         sendScriptData('eval', {
             id,
             script,
-            keepOutput
+            keepOutput,
+            async
         })
 
         evalPending.set(id, prm)

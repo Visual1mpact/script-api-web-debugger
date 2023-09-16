@@ -83,10 +83,10 @@ server.post('/client/send_eval',
     async (req, res) => {
         if (req.header('content-type') !== 'application/json') return res.status(415).end()
 
-        const { script, keepOutput } = req.body
+        const { script, keepOutput, async } = req.body
         res.status(200)
 
-        const data = await NBedrock.sendEval(script, keepOutput)
+        const data = await NBedrock.sendEval(script, keepOutput, async)
         res.send(data).end()
     }
 )

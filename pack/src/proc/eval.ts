@@ -14,15 +14,13 @@ import dynamicProperties from "../wrap/propreg.js"
 import eventListeners from "../wrap/event.js"
 import states from "./state.js"
 
-const asyncConstructor = (async() => {}).constructor as Function
 const evalUrl = new PromiseController<string>()
 
-async function execEval(id: string, script: string, keepOutput = true) {
+async function execEval(id: string, script: string, keepOutput = true, async = false) {
     try {
-        const fn = asyncConstructor('c', `await null; with (c) return [eval(${JSON.stringify(script)})]`)
-        Object.defineProperty(fn, 'name', { value: `debuggerEvalExec`})
+        const result = Function(`return function debuggerEvalExec(c) { with (c) return ${ async ? `(async function asyncDropper() {${script}})()` : `eval(${JSON.stringify(script)})` } }`)().call(ectx, ectxProxy)
 
-        const value = (await fn.call(ectx, ectxProxy))[0]
+        const value = async ? await result : result
         if (keepOutput) ectx.$_ = value
 
         postJSON(await evalUrl.promise, {
@@ -85,5 +83,5 @@ const ectxProxy = new Proxy(ectx, {
     has: (t, p) => true
 })
 
-Debugger.incoming.addEventListener('eval', ({ id, script, keepOutput }) => execEval(id, script, keepOutput))
+Debugger.incoming.addEventListener('eval', ({ id, script, keepOutput, async }) => execEval(id, script, keepOutput, async))
 Debugger.incoming.addEventListener('handshake', port => evalUrl.resolve(`http://127.0.0.1:${port}/bedrock/eval`), { once: true })
