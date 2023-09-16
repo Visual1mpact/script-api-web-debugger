@@ -19,7 +19,7 @@ const evalUrl = new PromiseController<string>()
 async function execEval(id: string, script: string, keepOutput = true, async = false) {
     try {
         const fbody = async ? '{' + script + '}' : ' return [eval(' +JSON.stringify(script) + ')]'
-        const res = await Function(`return async function debuggerAsyncEvalExec(c) { await null; with (c) ${fbody} }`)().call(ectx, ectxProxy)
+        const res = await Function(`return async function debuggerEvalExec(c) { await null; with (c) ${fbody} }`)().call(ectx, ectxProxy)
         const value = async ? res : res[0]
         if (keepOutput) ectx.$_ = value
 
