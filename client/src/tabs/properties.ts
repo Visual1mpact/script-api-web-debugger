@@ -321,13 +321,17 @@ export class PropertiesTable {
 
         const res = await sendEvalThrowable(`
             const ent = ${addtype === 'player' ? '$player' : '$id'}(${JSON.stringify(value)});
-            JSON.stringify({
+            ({
                 id: ent.id,
                 type: ent.typeId,
                 props: dynamicProperties.getAllEntity(ent)
             })
         `)
-        const { id, type, props } = JSON.parse(uninspectJSON(res.result)) as { id: string, type: string, props: Record<string, Bedrock.T_DynamicPropertyValue> }
+        const { id, type, props } = uninspectJSON(res.result) as {
+            id: string,
+            type: string,
+            props: Record<string, Bedrock.T_DynamicPropertyValue>
+        }
 
         const etable = new PropertiesTable(undefined, id)
         for (const [k, v] of entityProperties.get(type) ?? []) etable.register(k, v, props[k])

@@ -2,22 +2,19 @@ const AsyncFunction = (async()=>{}).constructor as Function,
     GeneratorFunction = (function*(){}).constructor as Function,
     AsyncGeneratorFunction = (async function*(){}).constructor as Function
 
-const uninspectProtoSym = Symbol('[Prototype]')
-
-function uninspectProperties(obj: any, protoSymbol = true, val: JSONInspect.ObjectBase) {
-    for (const [{ name, isSymbol }, value] of val.properties) obj[isSymbol ? Symbol(name) : name] ??= uninspectJSON(value)
+function uninspectProperties(obj: any, val: JSONInspect.ObjectBase, refs?: Ref) {
+    for (const [{ name, isSymbol }, value] of val.properties) obj[isSymbol ? Symbol(name) : name] ??= uninspectJSON(value, refs)
     if (typeof val.proto === 'object') {
         const constructor = class X {}
         Object.defineProperty(constructor, 'name', { value: val.proto.name ?? '' })
 
-        const protoObj = uninspectProperties(new constructor, protoSymbol, val.proto)
+        const protoObj = uninspectProperties(new constructor, val.proto, refs)
         Object.setPrototypeOf(obj, protoObj)
-        if (protoSymbol) obj[uninspectProtoSym] = protoObj
     }
     return obj
 }
 
-export function uninspectJSON(val: JSONInspect.All, protoSymbol = true): any {
+export function uninspectJSON(val: JSONInspect.All, refs?: Ref): any {
     switch (val?.type) {
         case 'string':
         case 'boolean': return val.value
@@ -27,9 +24,14 @@ export function uninspectJSON(val: JSONInspect.All, protoSymbol = true): any {
         case 'function': {
             const constructor: any = val.isAsync ? val.isGenerator ? AsyncGeneratorFunction : AsyncFunction : val.isGenerator ? GeneratorFunction : Function
 
-            const fn = val.isFunc ? new constructor : class {}
+            const fn = val.isFunc ? new constructor(`throw new ReferenceError('JSON-uninspected function is not callable')`)
+                : class { constructor() { throw new ReferenceError('JSON-uninspected function is not callable') } }
+
             Object.defineProperty(fn, 'name', { value: val.name })
-            uninspectProperties(fn, false, { properties: val.properties, proto: 'Function' })
+            uninspectProperties(fn, {
+                properties: val.properties,
+                proto: 'Function'
+            }, refs)
 
             return fn
         }
@@ -39,24 +41,24 @@ export function uninspectJSON(val: JSONInspect.All, protoSymbol = true): any {
         case 'undefined': return undefined
 
         case 'array': return uninspectProperties(
-            val.values.map(v => uninspectJSON(v, protoSymbol)),
-            protoSymbol, val
+            val.values.map(v => uninspectJSON(v, refs)),
+            val, refs
         )
         case 'map': return uninspectProperties(
-            new Map(Array.from(val.entries, ([k, v]) => [uninspectJSON(k), uninspectJSON(v)])),
-            protoSymbol, val
+            new Map(Array.from(val.entries, ([k, v]) => [uninspectJSON(k, refs), uninspectJSON(v, refs)])),
+            val, refs
         )
         case 'set': return uninspectProperties(
-            new Set(val.values.map(v => uninspectJSON(v, protoSymbol))),
-            protoSymbol, val
+            new Set(val.values.map(v => uninspectJSON(v, refs))),
+            val, refs
         )
         case 'object': return uninspectProperties(
-            val.properties,
-            protoSymbol, val
+            {},
+            val, refs
         )
         case 'proxy': return uninspectProperties(
             val.object,
-            protoSymbol, val
+            val, refs
         )
 
         case 'error':
@@ -73,6 +75,19 @@ export function uninspectJSON(val: JSONInspect.All, protoSymbol = true): any {
             return e
         }
 
+        case 'ref': {
+            if (!refs) throw new ReferenceError(`Reflist not defined (referencing ${val.id})`)
+
+            const v = refs.get(val.id)
+            if (!v) throw new ReferenceError(`Reference ID ${val.id} not found`)
+
+            return uninspectJSON(v, refs)
+        }
+
+        case 'rootref': return uninspectJSON(val.value, new Map(val.refs))
+
         default: return null
     }
 }
+
+type Ref = Map<number, JSONInspect.All>
