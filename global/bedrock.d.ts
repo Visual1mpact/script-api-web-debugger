@@ -154,9 +154,16 @@ declare namespace Bedrock {
         type: 'string'
         maxLength: number
         default?: string
+    } | {
+        type: 'vector',
+        default?: T_Vector3
     }
 
-    type T_DynamicPropertyValue = string | number | boolean | undefined
-
+    type T_DynamicPropertyValue = T_DynamicPropertyData['default']
+    type T_Vector3 = {
+        x: number
+        y: number
+        z: number
+    }
     type T_RunType = 'run' | 'runInterval' | 'runTimeout'
 }

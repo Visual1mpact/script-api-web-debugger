@@ -11,7 +11,7 @@ declare module '@minecraft/server' {
         can_fly: EntityCanFlyComponent,
         can_power_jump: EntityCanPowerJumpComponent,
         color: EntityColorComponent,
-        equipment_inventory: EntityEquipmentInventoryComponent,
+        equippable: EntityEquippableComponent,
         fire_immune: EntityFireImmuneComponent,
         floats_in_liquid: EntityFloatsInLiquidComponent,
         flying_speed: EntityFlyingSpeedComponent,

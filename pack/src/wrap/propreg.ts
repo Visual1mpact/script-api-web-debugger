@@ -4,7 +4,7 @@ import eventListeners from "./event.js";
 
 const defList = new WeakMap<DynamicPropertiesDefinition, Map<string, Bedrock.T_DynamicPropertyData>>()
 
-const { defineBoolean: obool, defineNumber: onum, defineString: ostr } = DynamicPropertiesDefinition.prototype
+const { defineBoolean: obool, defineNumber: onum, defineString: ostr, defineVector: ovec } = DynamicPropertiesDefinition.prototype
 
 DynamicPropertiesDefinition.prototype.defineBoolean = function(id, def) {
     if (!(this instanceof DynamicPropertiesDefinition)) throw new ReferenceError(`illegal bound`)
@@ -52,6 +52,21 @@ DynamicPropertiesDefinition.prototype.defineString = function(id, maxLength, def
     return this
 }
 
+DynamicPropertiesDefinition.prototype.defineVector = function(id, def) {
+    if (!(this instanceof DynamicPropertiesDefinition)) throw new ReferenceError(`illegal bound`)
+
+    ovec.call(this, id, def)
+
+    let list = defList.get(this)
+    if (!list) defList.set(this, list = new Map)
+    list.set(id, {
+        type: 'vector',
+        default: def
+    })
+
+    return this
+}
+
 const regEntList = new Map<string, Map<string, Bedrock.T_DynamicPropertyData>>()
 const regWldList = new Map<string, Bedrock.T_DynamicPropertyData>()
 
@@ -62,7 +77,7 @@ PropertyRegistry.prototype.registerEntityTypeDynamicProperties = function(def, t
 
     oregEnt.call(this, def, t)
 
-    const id = t.id
+    const id = typeof t === 'string' ? t : t.id
     let reg = regEntList.get(id)
     if (!reg) regEntList.set(id, reg = new Map)
     for (const [k, v] of defList.get(def) ?? []) reg.set(k, v)
@@ -156,7 +171,7 @@ const dynamicProperties = {
     entities: regEntList,
 
     getAllWorld() {
-        const list: Record<string, string | number | boolean | undefined> = Object.create(null)
+        const list: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
         for (const k of regWldList.keys()) list[k] = world.getDynamicProperty(k)
         return list
     },
@@ -165,7 +180,7 @@ const dynamicProperties = {
         const l = regEntList.get(ent.typeId)
         if (!l) return undefined
 
-        const list: Record<string, string | number | boolean | undefined> = Object.create(null)
+        const list: Record<string, Bedrock.T_DynamicPropertyValue> = Object.create(null)
         for (const k of l.keys()) list[k] = ent.getDynamicProperty(k)
         return list
     }

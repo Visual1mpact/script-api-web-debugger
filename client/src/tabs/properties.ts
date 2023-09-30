@@ -5,7 +5,7 @@ import { getIdThrow, iterateRecord } from "../lib/misc.js";
 import { bedrockEvents } from "../sse.js";
 import { sendEvalThrowable } from "../util.js";
 
-function elementValue(v: string | number | boolean | undefined) {
+function elementValue(v: Bedrock.T_DynamicPropertyValue) {
     switch (typeof v) {
         case 'string':
             return element('span', {
@@ -29,6 +29,16 @@ function elementValue(v: string | number | boolean | undefined) {
             return element('span', {
                 classes: 'ins-undefined',
                 textContent: 'undefined'
+            })
+        
+        case 'object':
+            return element('span', {
+                classes: 'property-type-vector',
+                childrens: [
+                    element('span', { classes: 'ins-number', textContent: String(v.x) }), ', ',
+                    element('span', { classes: 'ins-number', textContent: String(v.y) }), ', ',
+                    element('span', { classes: 'ins-number', textContent: String(v.z) }),
+                ]
             })
     }
 }
@@ -132,6 +142,43 @@ export class PropertiesTable {
                     e = le
                     value ??= ''
                 } break
+
+                case 'vector': {
+                    const vec = value = value && typeof value === 'object' ? value : { x: 0, y: 0, z: 0 }
+
+                    const xi: HTMLInputElement = element('input', {
+                        type: 'number',
+                        value: value.x,
+                        classes: 'fill-x',
+                        on: { input: () => vec.x = xi.valueAsNumber }
+                    })
+
+                    const yi: HTMLInputElement = element('input', {
+                        type: 'number',
+                        value: value.y,
+                        classes: 'fill-x',
+                        on: { input: () => vec.y = yi.valueAsNumber }
+                    })
+
+                    const zi: HTMLInputElement = element('input', {
+                        type: 'number',
+                        value: value.z,
+                        classes: 'fill-x',
+                        on: { input: () => vec.z = zi.valueAsNumber }
+                    })
+
+                    elmValue.prepend(element('div', {
+                        styles: {
+                            display: 'inline-flex'
+                        },
+                        childrens: [xi, ', ', yi, ', ', zi]
+                    }))
+
+                    return
+                } break
+
+                default:
+                    throw new Error('unsupported ' + type)
             }
 
             e.addEventListener('keydown', ev => {
@@ -274,13 +321,13 @@ export class PropertiesTable {
 
         const res = await sendEvalThrowable(`
             const ent = ${addtype === 'player' ? '$player' : '$id'}(${JSON.stringify(value)});
-            ({
+            JSON.stringify({
                 id: ent.id,
                 type: ent.typeId,
                 props: dynamicProperties.getAllEntity(ent)
             })
         `)
-        const { id, type, props } = uninspectJSON(res.result) as { id: string, type: string, props: Record<string, Bedrock.T_DynamicPropertyValue> }
+        const { id, type, props } = JSON.parse(uninspectJSON(res.result)) as { id: string, type: string, props: Record<string, Bedrock.T_DynamicPropertyValue> }
 
         const etable = new PropertiesTable(undefined, id)
         for (const [k, v] of entityProperties.get(type) ?? []) etable.register(k, v, props[k])
