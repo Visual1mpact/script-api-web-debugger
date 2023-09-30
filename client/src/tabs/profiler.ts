@@ -1,12 +1,14 @@
+import init from "../init.js"
 import { createTable, element, insertCell, insertRow } from "../lib/element.js"
 import { fetchThrow, getIdThrow } from "../lib/misc.js"
 import { valueBarCreator } from "../lib/misc2.js"
 
 const timelimeElm = getIdThrow('prf-tl')
 const dataElm = getIdThrow('prf-data')
+const startStopElm = getIdThrow('profiler-run', HTMLButtonElement)
 
-const barFrameNode = valueBarCreator([0, 192, 255], [0, 0, 255], 8, undefined, undefined, 'top')
-const barChildren = valueBarCreator([0, 192, 255], [0, 0, 255], 12, undefined, undefined, 'right')
+const barFrameNode = valueBarCreator([0, 192, 255], [0, 0, 255], 20, undefined, undefined, 'top')
+const barChildren = valueBarCreator([0, 192, 255], [0, 0, 255], 20, undefined, undefined, 'right')
 
 function nodeRow(tbody: HTMLTableSectionElement, data: NodeBedrock.Profiler, node: Bedrock.Profiler.Node) {
     const children = node.children ?? []
@@ -165,10 +167,6 @@ function generateTimeline(data: NodeBedrock.Profiler) {
     timelimeElm.replaceChildren(...collElms)
 }
 
-fetchThrow('/client/profiler/latest')
-    .then(v => v.json())
-    .then(generateTimeline)
-
 let timelineZoom = 100
 
 timelimeElm.addEventListener('wheel', ev => {
@@ -177,4 +175,25 @@ timelimeElm.addEventListener('wheel', ev => {
 
     timelineZoom = Math.max(timelineZoom + -Math.sign(deltaY) * timelineZoom / 10, 100)
     timelimeElm.style.width = timelineZoom + '%'
+})
+
+let profilerStatus = init.script.profiling
+startStopElm.textContent = profilerStatus ? 'stop' : 'start'
+
+startStopElm.addEventListener('click', async () => {
+    try {
+        startStopElm.disabled = true
+
+        const res = await fetchThrow(`/client/profiler/${profilerStatus ? 'stop' : 'start'}`, { method: 'POST' })        
+        
+        if (profilerStatus) {
+            const data = await res.json()
+            generateTimeline(data)
+        }
+
+        profilerStatus = !profilerStatus
+        startStopElm.textContent = profilerStatus ? 'stop' : 'start'
+    } finally {
+        startStopElm.disabled = false
+    }
 })

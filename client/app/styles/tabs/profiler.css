@@ -38,3 +38,10 @@
     background: var(--bg-strong);
     text-align: center;
 }
+
+#prf-data table > tbody > tr:nth-child(2n) > td {
+    padding: 4px;
+
+    border: 1px solid var(--border-mid);
+    border-radius: 6px;
+}
