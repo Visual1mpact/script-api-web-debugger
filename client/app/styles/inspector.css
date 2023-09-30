@@ -36,8 +36,6 @@ button.ins-button {
 .ins-obj-name { color: orange; }
 .ins-obj-proto { color: gray; }
 
-.ins-obj tr:hover > td { background: rgba(255, 255, 255, 0.04); }
-
 .ins-obj td { padding: 0 0.5em; }
 .ins-obj td:first-child {
     border-right: 1px dashed var(--border-mid);
